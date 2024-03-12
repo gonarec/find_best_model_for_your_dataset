@@ -200,7 +200,7 @@ def plot_boxplots_comparision(dataframe_1, dataframe_clean_1):
     dataframe_clean['Dataset'] = 'Dopo'
 
     # Uniamo i DataFrame
-    combined_df = pd.concat([dataframe, dataframe_clean])
+    combined_df = pd.concat([dataframe, dataframe_clean], ignore_index=True)
 
     # Iteriamo su ogni feature
     for i, col in enumerate(dataframe.columns):
@@ -215,7 +215,8 @@ def plot_boxplots_comparision(dataframe_1, dataframe_clean_1):
 
     # Imposta il layout dei subplot
     plt.tight_layout()
-    plt.show()
+
+    return fig
 
 def plot_bar_chart_df(df):
     if type(df) == pd.DataFrame:

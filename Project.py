@@ -68,7 +68,7 @@ if file is not None:
     with st.expander("DATA CLEANING - REMOVE OF NAN VALUE"):
         if new_df.isnull().values.any():
             st.markdown("<p style='color: yellow;'>There are Nan values in your Dataset.</p>", unsafe_allow_html=True)
-            option = st.radio("Do you want to remove the Nan values?",  ("Yes", "No"))
+            option = st.radio("Do you want to remove the Nan values?",  ("No","Yes"))
             
             if option == "Yes":
                 st.markdown("<p style='color: yellow;'>You chose to remove Nan values.</p>", unsafe_allow_html=True)
@@ -91,8 +91,8 @@ if file is not None:
                     st.write("NaN values have been filled.")
                 elif cleaning_option == "Fill NaN with the meadian of correlated data":
                     new_df=restore_function_corr(corr_features,0.10,new_df,'median')
-                    st.write("NaN values have been filled.")                  
-                    
+                    st.write("NaN values have been filled.")                                     
+                
                 if cleaning_option is not None:
                     st.markdown("<p style='color: yellow;'>This is your new dataset.</p>", unsafe_allow_html=True)
                     st.dataframe(new_df) 
@@ -104,7 +104,7 @@ if file is not None:
                     st.download_button(label="Download the new CSV", data=csv, file_name="cleaned_data.csv", mime="text/csv")
 
             elif option == "No":
-                st.markdown("<p style='color: yellow;'>If you dont remove the perfomance of the classification can be compromised.</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color: yellow;'>If you dont remove the Nan value the perfomance of the classification can be compromised.</p>", unsafe_allow_html=True)
         else:
             st.markdown("<p style='color: yellow;'>The dataset is clean there are not Nan values inside.</p>", unsafe_allow_html=True)
     
@@ -113,5 +113,29 @@ if file is not None:
         plt.figure(figsize=(14, 10))
         st.pyplot(plot_boxplots(new_df))
         st.markdown("<p style='color: yellow;'>These are the boxplots of your dataset.</p>", unsafe_allow_html=True)
-        option = st.radio("Do you want to manage the outliner?",  ("Yes", "No"))
+        option = st.radio("Do you want to manage the outliner?",  ("No", "Yes"))
         
+        if option == "Yes":
+                old_data=new_df.copy()
+                st.write("Now choose between the options how do you want remove the outliner. ")
+                cleaning_option = st.selectbox("Select cleaning function:", (None,"Replace with mean", "Replace with median", "Remove outliners"))
+                
+                if cleaning_option == "Replace with mean":
+                    new_df=replace_outliers_with_mean(new_df)
+                    st.write("NaN values have been dropped.")
+                elif cleaning_option == "Replace with median":
+                    new_df=replace_outliers_with_median(new_df)
+                elif cleaning_option == "Remove outliners":
+                    new_df=remove_outliers(new_df)
+                
+                if cleaning_option is not None:
+                    st.markdown("<p style='color: yellow;'>THESE ARE YOUR NEW DATA:</p>", unsafe_allow_html=True)
+                    plt.figure(figsize=(14, 10))
+                    st.pyplot(plot_boxplots_comparision(old_data,new_df))
+                    st.write("Size of Dataset after cleaning:", new_df.shape)  
+
+                    csv = new_df.to_csv(index=False)
+                    st.download_button(label="Download the new CSV", data=csv, file_name="cleaned_data.csv", mime="text/csv")
+
+        if option == "No":
+            st.markdown("<p style='color: yellow;'>If you dont remove the outliners the perfomance of the classification can be compromised.</p>", unsafe_allow_html=True)
