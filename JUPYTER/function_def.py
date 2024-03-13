@@ -15,7 +15,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib import colormaps
 
-
 def replace_outliers_with_median(df):
     df_clean = df.copy()  # Copia il DataFrame originale per non modificarlo direttamente
 
@@ -72,6 +71,75 @@ def remove_outliers(df):
             df_clean = df_clean[(df_clean[col] >= lower_bound) & (df_clean[col] <= upper_bound)]
 
     return df_clean
+
+def new_quality_value(df):
+    
+    new_df = df.copy()
+    # Mappa i valori della colonna 'quality' 
+    quality_mapping = {3: 0, 4: 0, 5: 1, 6: 1, 7: 2, 8: 2}
+    new_df['quality'] = new_df['quality'].replace(quality_mapping)
+    
+    return new_df
+
+def classificator (dataset, classifier):
+    accuracy_dict={}
+    x_data=dataset.drop(columns=[classifier])
+    y_data=dataset.loc[:,classifier]
+    x_train,x_test,y_train,y_test=train_test_split(x_data,y_data,test_size=0.10,random_state=10)
+
+    # RandomForestClassifier 
+    rf_model = RandomForestClassifier(n_estimators=1000, random_state=20)
+    rf_model.fit(x_train, y_train)
+
+    y_pred = rf_model.predict(x_test)
+
+    # Valutazione delle prestazioni del modello
+    accuracy = accuracy_score(y_test, y_pred)
+    #print("Accuratezza del modello RandomForestClassifier: %.3f" %accuracy)
+    accuracy_dict['RandomForest']=round(accuracy,3)
+
+    # Classificatore SVM con solo relevant feature
+    svm_classifier = SVC(kernel='rbf', C=1.0, gamma='scale', random_state=42)
+
+    svm_classifier.fit(x_train, y_train)
+    y_pred = svm_classifier.predict(x_test)
+
+    accuracy = accuracy_score(y_test, y_pred)
+    #print("Accuratezza del classificatore SVM: %.3f" %accuracy)
+    accuracy_dict['SVM']=round(accuracy,3)
+
+    # Crea il modello di regressione logistica con solo relevant
+    logistic_regression = LogisticRegression(multi_class='multinomial', solver='lbfgs', max_iter=10000, random_state=42)
+
+    logistic_regression.fit(x_train, y_train)
+    y_pred = logistic_regression.predict(x_test)
+
+    accuracy = accuracy_score(y_test, y_pred)
+    #print("Accuratezza del modello di regressione logistica: %.3f" %accuracy)
+    accuracy_dict['Regression']=accuracy
+
+    # DecisionTreeClassifier con tutte le feature
+    tree_classifier = DecisionTreeClassifier(random_state=42)
+
+    tree_classifier.fit(x_train, y_train)
+    y_pred = tree_classifier.predict(x_test)
+
+    accuracy = accuracy_score(y_test, y_pred)
+    #print("Accuratezza del classificatore ad albero decisionale: %.3f" %accuracy)
+    accuracy_dict['Tree']=round(accuracy,3)
+
+
+    # Classificatore naive bayes con relevant feature
+    naive_bayes_classifier = GaussianNB()
+    naive_bayes_classifier.fit(x_train, y_train)
+
+    y_pred = naive_bayes_classifier.predict(x_test)
+
+    accuracy = accuracy_score(y_test, y_pred)
+    #print("Accuratezza del classificatore Naive Bayes: %.3f" %accuracy)
+    accuracy_dict['Bayes']=round(accuracy,3)
+
+    return accuracy_dict
 
 def plot_boxplots(dataframe):
     num_plots = len(dataframe.columns) - 1  
@@ -151,7 +219,6 @@ def plot_boxplots_comparision(dataframe_1, dataframe_clean_1):
     return fig
 
 def plot_bar_chart_df(df):
-    fig, ax = plt.subplots()
     if type(df) == pd.DataFrame:
         keys = df.index.tolist()  # Ottieni gli indici del DataFrame come chiavi
         values = df.iloc[:, 0].tolist()  # Ottieni i valori dalla prima colonna del DataFrame
@@ -163,18 +230,14 @@ def plot_bar_chart_df(df):
 
     # Aggiungi valori sulle barplot
     for i, v in enumerate(values):
-        ax.text(i, v + 0.01, f"{v:.2f}", ha='center', va='bottom')
+        plt.text(i, v + 0.01, f"{v:.2f}", ha='center', va='bottom')
     
-    ax.bar(keys, values, color=colors)
-    xlabel=ax.set_xlabel('Algorithms',labelpad=10)
-    ylabel=ax.set_ylabel('Performance with testsize')
-
-    # Cambia colore delle label sugli assi
-    xlabel.set_color('red')
-    ylabel.set_color('red')
-    #ax.set_xticks(axis='x', rotation=45, ha='right')
-    ax.set_ylim(0, max(values) * 1.2)  # Estendi l'asse y del 10%
-    return fig
+    plt.bar(keys, values, color=colors)
+    plt.xlabel('Algoritmi')
+    plt.ylabel('Performance')
+    plt.xticks(rotation=45, ha='right')
+    plt.ylim(0, max(values) * 1.2)  # Estendi l'asse y del 10%
+    plt.show()
 
 def plot_result(res):
     num_cols = len(res.columns)
@@ -196,7 +259,7 @@ def plot_result(res):
         
         axs[row, col].bar(keys, values, color=colors)
         axs[row, col].set_ylabel('Valori')
-        axs[row, col].set_title('Test_size='+str(col_name))
+        axs[row, col].set_title('Dataset name='+col_name)
         axs[row, col].set_xticks(keys)
         axs[row, col].set_xticklabels(keys, rotation=45, ha='right')
         axs[row, col].set_ylim(0, max(values) * 1.2)
@@ -206,16 +269,18 @@ def plot_result(res):
         fig.delaxes(axs.flatten()[i])
 
     plt.tight_layout()
-    return fig
+    plt.show()
 
 def classificator_evo (dataset, classifier, testsize):
     accuracy_dict={}
     x_data=dataset.drop(columns=[classifier])
     y_data=dataset.loc[:,classifier]
     x_train,x_test,y_train,y_test=train_test_split(x_data,y_data,test_size=testsize,random_state=10)
+
+    accuracy_dict['Size']= dataset.shape[0]
     
     # RandomForestClassifier 
-    rf_model = RandomForestClassifier(n_estimators=100, random_state=20)
+    rf_model = RandomForestClassifier(n_estimators=1000, random_state=20)
     rf_model.fit(x_train, y_train)
 
     y_pred = rf_model.predict(x_test)
@@ -236,14 +301,14 @@ def classificator_evo (dataset, classifier, testsize):
     accuracy_dict['SVM']=round(accuracy,3)
 
     # Crea il modello di regressione logistica con solo relevant
-    #logistic_regression = LogisticRegression(multi_class='multinomial', solver='lbfgs', max_iter=10000, random_state=42)
+    logistic_regression = LogisticRegression(multi_class='multinomial', solver='lbfgs', max_iter=10000, random_state=42)
 
-    #logistic_regression.fit(x_train, y_train)
-    #y_pred = logistic_regression.predict(x_test)
+    logistic_regression.fit(x_train, y_train)
+    y_pred = logistic_regression.predict(x_test)
 
-    #accuracy = accuracy_score(y_test, y_pred)
+    accuracy = accuracy_score(y_test, y_pred)
     #print("Accuratezza del modello di regressione logistica: %.3f" %accuracy)
-    #accuracy_dict['Regression']=accuracy
+    accuracy_dict['Regression']=accuracy
 
     # DecisionTreeClassifier con tutte le feature
     tree_classifier = DecisionTreeClassifier(random_state=42)
@@ -267,6 +332,103 @@ def classificator_evo (dataset, classifier, testsize):
     accuracy_dict['Bayes']=round(accuracy,3)
 
     return accuracy_dict
+
+def classification_evo(dataframe, testsize):
+
+    data=dataframe.copy()
+    data_clean_median=replace_outliers_with_median(data)
+    data_clean_mean=replace_outliers_with_mean(data)
+    data_clean_remove=remove_outliers(data)
+
+    relevant=dataframe.drop(columns=['fixed_acidity','residual_sugar', 'chlorides', 'free_sulfur_dioxide', 'total_sulfur_dioxide', 'density', 'pH'])
+    relevant_clean_median=replace_outliers_with_median(relevant)
+    relevant_clean_mean=replace_outliers_with_mean(relevant)
+    relevant_clean_remove=remove_outliers(relevant)
+
+
+    result=pd.DataFrame()
+
+    result['Data'+'_'+str(testsize)]=classificator_evo(data,'quality',testsize)
+
+    result['Relevant'+'_'+str(testsize)]=classificator_evo(relevant,'quality', testsize)
+
+    result['Data_Clean_Median'+'_'+str(testsize)]=classificator_evo(data_clean_median,'quality', testsize)
+
+    result['Relevant_Clean_Median'+'_'+str(testsize)]=classificator_evo(relevant_clean_median, 'quality', testsize)
+
+    result['Data_Clean_Mean'+'_'+str(testsize)]=classificator_evo(data_clean_mean,'quality', testsize)
+
+    result['Relevant_Clean_Mean'+'_'+str(testsize)]=classificator_evo(relevant_clean_mean, 'quality', testsize)
+
+    result['Data_Remove'+'_'+str(testsize)]=classificator_evo(data_clean_remove,'quality', testsize)
+
+    result['Relevant_Remove'+'_'+str(testsize)]=classificator_evo(relevant_clean_remove, 'quality', testsize)
+
+    return result
+
+def plot_result_evo(res):
+    num=res.iloc[0]
+    result=res.drop(index= ['Size'])
+    num_cols = len(result.columns)
+    num_rows = (num_cols + 1) // 2 
+
+    # Creazione del grafico a barre
+    fig, axs = plt.subplots(num_rows, 2, figsize=(15, 5*num_rows))
+
+    # Itera sul DataFrame e crea i subplot
+    for i, (col_name, col_data) in enumerate(result.items()):
+        row = i // 2
+        col = i % 2
+        keys = result.index
+        values = col_data
+        colors = plt.cm.RdBu(np.array(values) / max(values))
+        
+        for j, v in enumerate(values):
+            axs[row, col].text(j, v + 0.01, f"{v:.2f}", ha='center', va='bottom')
+        
+        axs[row, col].bar(keys, values, color=colors)
+        axs[row, col].set_ylabel('Valori')
+        axs[row, col].set_title('Dataset name='+col_name+'   Dataset size='+str(num.iloc[i]))
+        axs[row, col].set_xticks(keys)
+        axs[row, col].set_xticklabels(keys, rotation=45, ha='right')
+        axs[row, col].set_ylim(0, max(values) * 1.2)
+
+    # Rimuovi i subplot non utilizzati
+    for i in range(num_cols, num_rows*2):
+        fig.delaxes(axs.flatten()[i])
+
+    plt.tight_layout()
+    plt.show()
+
+def plot_bar_chart_df_evo(df):
+  
+    keys = df.index.tolist()  
+    values = df.iloc[:, 0].tolist()  
+    x_labels = [f"{key}: {df.iloc[i, 1]}" for i, key in enumerate(keys)]  
+   
+
+    colors = plt.cm.RdBu(np.array(values) / max(values)) 
+
+    # Aggiungi valori sulle barplot
+    for i, v in enumerate(values):
+        plt.text(i, v + 0.01, f"{v:.2f}", ha='center', va='bottom')
+    
+    plt.bar(keys, values, color=colors)
+    plt.xlabel('Algoritmi')
+    plt.ylabel('Performance')
+    plt.xticks(range(len(keys)), x_labels, rotation=45, ha='right')
+    plt.ylim(0, max(values) * 1.2)
+    plt.show()
+
+def trova_max(df):
+    # Trova il massimo in ogni riga
+    max_values = df.max(axis=1)
+
+    # Trova l'indice del massimo in ogni riga
+    max_indices = df.idxmax(axis=1)
+
+    max_df = pd.DataFrame({'Max_Value': max_values, 'Index': max_indices})
+    return max_df
 
 def restore_function_corr(corr_features, delta, dataframe, mean):
     labels_with_nan = dataframe.columns[dataframe.isna().any()].tolist()

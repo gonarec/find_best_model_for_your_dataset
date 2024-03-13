@@ -6,9 +6,9 @@ from matplotlib import colormaps
 import streamlit as st
 import base64
 from PIL import Image
-from function_def import replace_outliers_with_median, replace_outliers_with_mean, remove_outliers,new_quality_value
-from function_def import  classificator, plot_boxplots, plot_boxplots_comparision, plot_bar_chart_df, plot_result
-from function_def import classificator_evo, classification_evo, plot_result_evo, plot_bar_chart_df_evo, trova_max, restore_function_corr
+from function_def import replace_outliers_with_median, replace_outliers_with_mean, remove_outliers,restore_function_corr
+from function_def import  plot_boxplots, plot_boxplots_comparision, plot_bar_chart_df, plot_result,classificator_evo
+
 
 image_left = Image.open("ROB.jpeg")
 image_right = Image.open("ROB.jpeg")
@@ -25,12 +25,12 @@ with col2:
     st.markdown(
     "<h1 style='text-align: center; color: blue;'>FIND THE BEST MODEL TO CLASSIFY YOUR DATABASE</h1>", 
     unsafe_allow_html=True)
-
+    st.write("")
+    st.markdown("<p style='text-align: left; color: orange;'>This tool product the accuracy of Random Forest, SVM, Bayes Gaussian and Decision Tree algorithms.<br> The accuracy depends on yor dataset, you can improve your accuracy using the following cleaning methods. </p>", unsafe_allow_html=True)
 # Colonna destra con l'immagine
 with col3:
     st.image(image_right, use_column_width=True)
 
-# Linea di testo
 st.write("")
 st.write("")
 st.markdown("<p style='text-align: left; color: yellow;'>INSERT YOUR DATABASE:</p>", unsafe_allow_html=True)
@@ -55,17 +55,14 @@ if file is not None:
         'Correlazione': corr_matrix.values[corr_index]
     })
     
-    #feature_to_classify = st.text_input("Which feature do you want classify?")
-    #new_df=new_df.drop(columns=feature_to_classify)
+ 
     # Creiamo il plot del heatmap
     #plt.figure(figsize=(8, 6))
     #sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".2f")
     #plt.title('Heatmap della matrice di correlazione')
-
-    # Mostriamo il plot utilizzando Streamlit
     #st.pyplot(plt)
 
-    with st.expander("DATA CLEANING - REMOVE OF NAN VALUE"):
+    with st.expander("DATA CLEANING - REMOVE OF NAN VALUE"):        
         if new_df.isnull().values.any():
             st.markdown("<p style='color: yellow;'>There are Nan values in your Dataset.</p>", unsafe_allow_html=True)
             option = st.radio("Do you want to remove the Nan values?",  ("No","Yes"))
@@ -109,33 +106,138 @@ if file is not None:
             st.markdown("<p style='color: yellow;'>The dataset is clean there are not Nan values inside.</p>", unsafe_allow_html=True)
     
     with st.expander("DATA CLEANING - OUTLINER"):
-        st.markdown("<p style='color: yellow;'>BOXPLOT FEATURES: </p>", unsafe_allow_html=True)
-        plt.figure(figsize=(14, 10))
-        st.pyplot(plot_boxplots(new_df))
-        st.markdown("<p style='color: yellow;'>These are the boxplots of your dataset.</p>", unsafe_allow_html=True)
-        option = st.radio("Do you want to manage the outliner?",  ("No", "Yes"))
+        option1 = st.radio("Do you want to show the outliners?",  ("No","Yes"))
+        if option1=="Yes":
+            st.markdown("<p style='color: yellow;'>BOXPLOT FEATURES: </p>", unsafe_allow_html=True)
+            plt.figure(figsize=(14, 10))
+            st.pyplot(plot_boxplots(new_df))
+            st.markdown("<p style='color: yellow;'>These are the boxplots of your dataset.</p>", unsafe_allow_html=True)
+            option = st.radio("Do you want to manage the outliner?",  ("No", "Yes"))
+            
+            if option == "Yes":
+                    old_data=new_df.copy()
+                    st.write("Now choose between the options how do you want remove the outliner. ")
+                    cleaning_option = st.selectbox("Select cleaning function:", (None,"Replace with mean", "Replace with median", "Remove outliners"))
+                    
+                    if cleaning_option == "Replace with mean":
+                        new_df=replace_outliers_with_mean(new_df)
+                        st.write("NaN values have been dropped.")
+                    elif cleaning_option == "Replace with median":
+                        new_df=replace_outliers_with_median(new_df)
+                    elif cleaning_option == "Remove outliners":
+                        new_df=remove_outliers(new_df)
+                    
+                    if cleaning_option is not None:
+                        st.markdown("<p style='color: yellow;'>THESE ARE YOUR NEW DATA:</p>", unsafe_allow_html=True)
+                        plt.figure(figsize=(14, 10))
+                        st.pyplot(plot_boxplots_comparision(old_data,new_df))
+                        st.write("Size of Dataset after cleaning:", new_df.shape)  
+
+                        csv = new_df.to_csv(index=False)
+                        st.download_button(label="Download the new CSV", data=csv, file_name="new_data.csv", mime="text/csv")
+
+            if option == "No":
+                st.markdown("<p style='color: yellow;'>If you dont remove the outliners the perfomance of the classification can be compromised.</p>", unsafe_allow_html=True)
+
+    with st.expander("CLASSIFICATION:"):
+        result=pd.DataFrame()
+        feature_to_classify = st.text_input("Which feature do you want classify?", key='feature')
+        test_size = st.slider("Select the test size dimension:", min_value=0.0, max_value=0.9, step=0.05, value=0.0, key='slider')
+        if (feature_to_classify is not None and test_size != 0.0) :
+            loading_message = st.empty()
+            loading_message.info("Loading...")
+            result[test_size] = classificator_evo(new_df, feature_to_classify, test_size)
+            loading_message.empty()
+            plt.figure(figsize=(14, 10))
+            st.pyplot(plot_bar_chart_df(result[test_size]))
         
-        if option == "Yes":
-                old_data=new_df.copy()
-                st.write("Now choose between the options how do you want remove the outliner. ")
-                cleaning_option = st.selectbox("Select cleaning function:", (None,"Replace with mean", "Replace with median", "Remove outliners"))
-                
-                if cleaning_option == "Replace with mean":
-                    new_df=replace_outliers_with_mean(new_df)
-                    st.write("NaN values have been dropped.")
-                elif cleaning_option == "Replace with median":
-                    new_df=replace_outliers_with_median(new_df)
-                elif cleaning_option == "Remove outliners":
-                    new_df=remove_outliers(new_df)
-                
-                if cleaning_option is not None:
-                    st.markdown("<p style='color: yellow;'>THESE ARE YOUR NEW DATA:</p>", unsafe_allow_html=True)
+            opt = st.radio("Do you confront your different testsize?",  ("No, i want get another testsize","Yes, show me the results"), key='opt')
+            if opt == "Yes, show me the results":
+                st.markdown("<p style='color: yellow;'>THESE ARE YOUR TEST:</p>", unsafe_allow_html=True)
+                st.dataframe(result)
+            else:
+                test_size = st.slider("Select the test size dimension:", min_value=0.0, max_value=0.9, step=0.05, value=0.0, key='slider1')
+                if (feature_to_classify is not None and test_size != 0.0) :
+                    loading_message = st.empty()
+                    loading_message.info("Loading...")
+                    result[test_size] = classificator_evo(new_df, feature_to_classify, test_size)
+                    loading_message.empty()
                     plt.figure(figsize=(14, 10))
-                    st.pyplot(plot_boxplots_comparision(old_data,new_df))
-                    st.write("Size of Dataset after cleaning:", new_df.shape)  
+                    st.pyplot(plot_bar_chart_df(result[test_size]))
+                    opt = st.radio("Do you want confront your different testsize?",  ("No, i want get another testsize","Yes, show me the results"), key='opt1')
+                    if opt == "Yes, show me the results":
+                        st.markdown("<p style='color: yellow;'>THESE ARE YOUR TEST:</p>", unsafe_allow_html=True)
+                        st.dataframe(result)
+                        plt.figure(figsize=(14, 10))
+                        st.pyplot(plot_result(result))
+                    else:
+                        test_size = st.slider("Select the test size dimension:", min_value=0.0, max_value=0.9, step=0.05, value=0.0, key='slider2')
+                        if (feature_to_classify is not None and test_size != 0.0) :
+                            loading_message = st.empty()
+                            loading_message.info("Loading...")
+                            result[test_size] = classificator_evo(new_df, feature_to_classify, test_size)
+                            loading_message.empty()
+                            plt.figure(figsize=(14, 10))
+                            st.pyplot(plot_bar_chart_df(result[test_size]))
+                            opt = st.radio("Do you want confront your different testsize?",  ("No, i want get another testsize","Yes, show me the results"), key=f'opt2')
+                            if opt == "Yes, show me the results":
+                                st.markdown("<p style='color: yellow;'>THESE ARE YOUR TEST:</p>", unsafe_allow_html=True)
+                                st.dataframe(result)
+                                plt.figure(figsize=(14, 10))
+                                st.pyplot(plot_result(result))
+                            else:
+                                test_size = st.slider("Select the test size dimension:", min_value=0.0, max_value=0.9, step=0.05, value=0.0, key='slider3')
+                                if (feature_to_classify is not None and test_size != 0.0) :
+                                    loading_message = st.empty()
+                                    loading_message.info("Loading...")
+                                    result[test_size] = classificator_evo(new_df, feature_to_classify, test_size)
+                                    loading_message.empty()
+                                    plt.figure(figsize=(14, 10))
+                                    st.pyplot(plot_bar_chart_df(result[test_size]))
+                                    opt = st.radio("Do you want confront your different testsize?",  ("No, i want get another testsize","Yes, show me the results"), key='opt3')
+                                    if opt == "Yes, show me the results":
+                                        st.markdown("<p style='color: yellow;'>THESE ARE YOUR TEST:</p>", unsafe_allow_html=True)
+                                        st.dataframe(result)
+                                        plt.figure(figsize=(14, 10))
+                                        st.pyplot(plot_result(result))
+                                    else:
+                                        test_size = st.slider("Select the test size dimension:", min_value=0.0, max_value=0.9, step=0.05, value=0.0, key='slider4')
+                                        if (feature_to_classify is not None and test_size != 0.0) :
+                                            loading_message = st.empty()
+                                            loading_message.info("Loading...")
+                                            result[test_size] = classificator_evo(new_df, feature_to_classify, test_size)
+                                            loading_message.empty()
+                                            plt.figure(figsize=(14, 10))
+                                            st.pyplot(plot_bar_chart_df(result[test_size]))
+                                            opt = st.radio("Do you want confront your different testsize?",  ("No, i want get another testsize","Yes, show me the results"), key='opt4')
+                                            if opt == "Yes, show me the results":
+                                                st.markdown("<p style='color: yellow;'>THESE ARE YOUR TEST:</p>", unsafe_allow_html=True)
+                                                st.dataframe(result)
+                                                plt.figure(figsize=(14, 10))
+                                                st.pyplot(plot_result(result))
+                                            else:
+                                                test_size = st.slider("Select the test size dimension:", min_value=0.0, max_value=0.9, step=0.05, value=0.0, key='slider5')
+                                                if (feature_to_classify is not None and test_size != 0.0) :
+                                                    loading_message = st.empty()
+                                                    loading_message.info("Loading...")
+                                                    result[test_size] = classificator_evo(new_df, feature_to_classify, test_size)
+                                                    loading_message.empty()
+                                                    plt.figure(figsize=(14, 10))
+                                                    st.pyplot(plot_bar_chart_df(result[test_size]))
+                                                    opt = st.radio("Do you want confront your different testsize?",  ("No, i want get another testsize","Yes, show me the results"), key='opt5')
+                                                    if opt == "Yes, show me the results":
+                                                        st.markdown("<p style='color: yellow;'>THESE ARE YOUR TEST:</p>", unsafe_allow_html=True)
+                                                        st.dataframe(result)
+                                                        plt.figure(figsize=(14, 10))
+                                                        st.pyplot(plot_result(result))
+                                                    else:
+                                                        st.markdown("<p style='color: yellow;'>YOU CAN CONFRONT MAXIMUM SIX TESTSIZE VALUE </p>", unsafe_allow_html=True)
+                                                        plt.figure(figsize=(14, 10))
+                                                        st.pyplot(plot_result(result))
+        st.title('Download DataFrame in CSV')
+        # Pulsante per il download
+        csv = result.to_csv(index=False)
+        b64 = base64.b64encode(csv.encode()).decode()  # Codifica in base64
+        href = f'<a href="data:file/csv;base64,{b64}" download="data.csv">Click here for the CSV</a>'
+        st.markdown(href, unsafe_allow_html=True)               
 
-                    csv = new_df.to_csv(index=False)
-                    st.download_button(label="Download the new CSV", data=csv, file_name="cleaned_data.csv", mime="text/csv")
-
-        if option == "No":
-            st.markdown("<p style='color: yellow;'>If you dont remove the outliners the perfomance of the classification can be compromised.</p>", unsafe_allow_html=True)
