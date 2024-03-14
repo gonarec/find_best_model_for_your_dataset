@@ -16,11 +16,11 @@ import matplotlib.pyplot as plt
 from matplotlib import colormaps
 
 
-def replace_outliers_with_median(df):
+def replace_outliers_with_median(df,feature):
     df_clean = df.copy()  # Copia il DataFrame originale per non modificarlo direttamente
 
     for col in df.columns:
-        if col != 'quality':
+        if col != feature:
             q1 = df[col].quantile(0.25)  # Calcola il primo quartile
             q3 = df[col].quantile(0.75)  # Calcola il terzo quartile
             iqr = q3 - q1  # Calcola l'interquartile range (IQR)
@@ -35,11 +35,11 @@ def replace_outliers_with_median(df):
 
     return df_clean
 
-def replace_outliers_with_mean(df):
+def replace_outliers_with_mean(df,feature):
     df_clean = df.copy()  # Copia il DataFrame originale per non modificarlo direttamente
 
     for col in df.columns:
-        if col != 'quality':
+        if col != feature:
             q1 = df[col].quantile(0.25)  # Calcola il primo quartile
             q3 = df[col].quantile(0.75)  # Calcola il terzo quartile
             iqr = q3 - q1  # Calcola l'interquartile range (IQR)
@@ -54,12 +54,12 @@ def replace_outliers_with_mean(df):
 
     return df_clean
 
-def remove_outliers(df):
+def remove_outliers(df,feature):
 
     df_clean = df.copy()  # Copia il DataFrame originale per non modificarlo direttamente
 
     for col in df.columns:
-        if col != 'quality':
+        if col != feature:
             q1 = df[col].quantile(0.25)  # Calcola il primo quartile
             q3 = df[col].quantile(0.75)  # Calcola il terzo quartile
             iqr = q3 - q1  # Calcola l'interquartile range (IQR)
@@ -73,7 +73,7 @@ def remove_outliers(df):
 
     return df_clean
 
-def plot_boxplots(dataframe):
+def plot_boxplots(dataframe, feature):
     num_plots = len(dataframe.columns) - 1  
     cols_per_row = 4 
 
@@ -86,13 +86,13 @@ def plot_boxplots(dataframe):
     # Flatten l'array di assi se è multidimensionale
     axes = axes.flatten()
 
-    # Itera sulle colonne del DataFrame escludendo "quality"
-    for i, col in enumerate(dataframe.drop(columns='quality')):
+    # Itera sulle colonne del DataFrame escludendo feature
+    for i, col in enumerate(dataframe.drop(columns=feature)):
         # Seleziona l'asse corrente
         ax = axes[i]
 
-        # Disegna il boxplot per la feature corrente con "quality" sulle x
-        sns.boxplot(x='quality', y=col, data=dataframe, ax=ax, palette='coolwarm', hue='quality', legend=False)
+        # Disegna il boxplot per la feature corrente con feature sulle x
+        sns.boxplot(x=feature, y=col, data=dataframe, ax=ax, palette='coolwarm', hue=feature, legend=False)
 
         # Imposta il titolo del boxplot
         ax.set_title(f'Boxplot di {col}')
@@ -112,10 +112,10 @@ def plot_boxplots(dataframe):
 
     return fig
 
-def plot_boxplots_comparision(dataframe_1, dataframe_clean_1):
+def plot_boxplots_comparision(dataframe_1, dataframe_clean_1,feature):
     dataframe=dataframe_1.copy()
     dataframe_clean=dataframe_clean_1.copy()
-    num_plots = len(dataframe.columns) - 1 # Numero di colonne nel DataFrame escludendo "quality" e Dataset
+    num_plots = len(dataframe.columns) - 1 # Numero di colonne nel DataFrame escludendo feature e Dataset
     cols_per_row = 4 
 
     # Calcola il numero di righe necessarie
@@ -136,7 +136,7 @@ def plot_boxplots_comparision(dataframe_1, dataframe_clean_1):
 
     # Iteriamo su ogni feature
     for i, col in enumerate(dataframe.columns):
-        if col != 'quality' and col != 'Dataset':
+        if col != feature and col != 'Dataset':
             ax = axes[i]
             sns.boxplot(x='Dataset', y=col, data=combined_df, hue='Dataset', palette=["blue", "orange"], ax=ax)
             ax.set_title(f'Rimozione Outlier di {col}')

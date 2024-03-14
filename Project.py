@@ -26,7 +26,7 @@ with col2:
     "<h1 style='text-align: center; color: blue;'>FIND THE BEST MODEL TO CLASSIFY YOUR DATABASE</h1>", 
     unsafe_allow_html=True)
     st.write("")
-    st.markdown("<p style='text-align: left; color: orange;'>This tool product the accuracy of Random Forest, SVM, Bayes Gaussian and Decision Tree algorithms.<br> The accuracy depends on yor dataset, you can improve your accuracy using the following cleaning methods. </p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: left; color: orange;'>This tool product the accuracy of Random Forest, SVM, Bayes Gaussian and Decision Tree algorithms.<br> The accuracy depends on yor dataset, you can improve the accuracy using the following cleaning methods. </p>", unsafe_allow_html=True)
 # Colonna destra con l'immagine
 with col3:
     st.image(image_right, use_column_width=True)
@@ -46,7 +46,7 @@ if file is not None:
     new_df = df.copy()
     st.dataframe(new_df)
     st.write(new_df.shape) 
-
+    feature_to_classify = st.text_input("Which feature do you want classify?", key='feature')
     corr_matrix = new_df.corr().abs()
     corr_index = np.where((np.triu(corr_matrix, k=1) > 0.20))
     corr_features = pd.DataFrame({
@@ -96,7 +96,7 @@ if file is not None:
                     st.write("Size of Dataset after cleaning:", new_df.shape)  
 
                     # Adding download button for cleaned DataFrame
-                    csv = new_df.to_csv(index=False)
+                    csv = new_df.to_csv()
                     # Download button
                     st.download_button(label="Download the new CSV", data=csv, file_name="cleaned_data.csv", mime="text/csv")
 
@@ -110,7 +110,7 @@ if file is not None:
         if option1=="Yes":
             st.markdown("<p style='color: yellow;'>BOXPLOT FEATURES: </p>", unsafe_allow_html=True)
             plt.figure(figsize=(14, 10))
-            st.pyplot(plot_boxplots(new_df))
+            st.pyplot(plot_boxplots(new_df,feature_to_classify))
             st.markdown("<p style='color: yellow;'>These are the boxplots of your dataset.</p>", unsafe_allow_html=True)
             option = st.radio("Do you want to manage the outliner?",  ("No", "Yes"))
             
@@ -120,20 +120,20 @@ if file is not None:
                     cleaning_option = st.selectbox("Select cleaning function:", (None,"Replace with mean", "Replace with median", "Remove outliners"))
                     
                     if cleaning_option == "Replace with mean":
-                        new_df=replace_outliers_with_mean(new_df)
+                        new_df=replace_outliers_with_mean(new_df,feature_to_classify)
                         st.write("NaN values have been dropped.")
                     elif cleaning_option == "Replace with median":
-                        new_df=replace_outliers_with_median(new_df)
+                        new_df=replace_outliers_with_median(new_df,feature_to_classify)
                     elif cleaning_option == "Remove outliners":
-                        new_df=remove_outliers(new_df)
+                        new_df=remove_outliers(new_df,feature_to_classify)
                     
                     if cleaning_option is not None:
                         st.markdown("<p style='color: yellow;'>THESE ARE YOUR NEW DATA:</p>", unsafe_allow_html=True)
                         plt.figure(figsize=(14, 10))
-                        st.pyplot(plot_boxplots_comparision(old_data,new_df))
+                        st.pyplot(plot_boxplots_comparision(old_data,new_df,feature_to_classify))
                         st.write("Size of Dataset after cleaning:", new_df.shape)  
 
-                        csv = new_df.to_csv(index=False)
+                        csv = new_df.to_csv()
                         st.download_button(label="Download the new CSV", data=csv, file_name="new_data.csv", mime="text/csv")
 
             if option == "No":
@@ -141,7 +141,6 @@ if file is not None:
 
     with st.expander("CLASSIFICATION:"):
         result=pd.DataFrame()
-        feature_to_classify = st.text_input("Which feature do you want classify?", key='feature')
         test_size = st.slider("Select the test size dimension:", min_value=0.0, max_value=0.9, step=0.05, value=0.0, key='slider')
         if (feature_to_classify is not None and test_size != 0.0) :
             loading_message = st.empty()
@@ -185,6 +184,10 @@ if file is not None:
                                 st.dataframe(result)
                                 plt.figure(figsize=(14, 10))
                                 st.pyplot(plot_result(result))
+                                csv=result.to_csv()
+                                b64 = base64.b64encode(csv.encode()).decode()  # Codifica in base64
+                                href = f'<a href="data:file/csv;base64,{b64}" download="data.csv">Click here for the CSV</a>'
+                                st.markdown(href, unsafe_allow_html=True)
                             else:
                                 test_size = st.slider("Select the test size dimension:", min_value=0.0, max_value=0.9, step=0.05, value=0.0, key='slider3')
                                 if (feature_to_classify is not None and test_size != 0.0) :
@@ -200,6 +203,10 @@ if file is not None:
                                         st.dataframe(result)
                                         plt.figure(figsize=(14, 10))
                                         st.pyplot(plot_result(result))
+                                        csv=result.to_csv()
+                                        b64 = base64.b64encode(csv.encode()).decode()  # Codifica in base64
+                                        href = f'<a href="data:file/csv;base64,{b64}" download="data.csv">Click to download the result in CSV</a>'
+                                        st.markdown(href, unsafe_allow_html=True)
                                     else:
                                         test_size = st.slider("Select the test size dimension:", min_value=0.0, max_value=0.9, step=0.05, value=0.0, key='slider4')
                                         if (feature_to_classify is not None and test_size != 0.0) :
@@ -215,6 +222,10 @@ if file is not None:
                                                 st.dataframe(result)
                                                 plt.figure(figsize=(14, 10))
                                                 st.pyplot(plot_result(result))
+                                                csv=result.to_csv()
+                                                b64 = base64.b64encode(csv.encode()).decode()  # Codifica in base64
+                                                href = f'<a href="data:file/csv;base64,{b64}" download="data.csv">Click to download the result in CSV</a>'
+                                                st.markdown(href, unsafe_allow_html=True)
                                             else:
                                                 test_size = st.slider("Select the test size dimension:", min_value=0.0, max_value=0.9, step=0.05, value=0.0, key='slider5')
                                                 if (feature_to_classify is not None and test_size != 0.0) :
@@ -230,14 +241,18 @@ if file is not None:
                                                         st.dataframe(result)
                                                         plt.figure(figsize=(14, 10))
                                                         st.pyplot(plot_result(result))
+                                                        csv=result.to_csv()
+                                                        b64 = base64.b64encode(csv.encode()).decode()  # Codifica in base64
+                                                        href = f'<a href="data:file/csv;base64,{b64}" download="data.csv">Click to download the result in CSV</a>'
+                                                        st.markdown(href, unsafe_allow_html=True)
                                                     else:
                                                         st.markdown("<p style='color: yellow;'>YOU CAN CONFRONT MAXIMUM SIX TESTSIZE VALUE </p>", unsafe_allow_html=True)
                                                         plt.figure(figsize=(14, 10))
                                                         st.pyplot(plot_result(result))
-        st.title('Download DataFrame in CSV')
-        # Pulsante per il download
-        csv = result.to_csv(index=False)
-        b64 = base64.b64encode(csv.encode()).decode()  # Codifica in base64
-        href = f'<a href="data:file/csv;base64,{b64}" download="data.csv">Click here for the CSV</a>'
-        st.markdown(href, unsafe_allow_html=True)               
+                                                        csv = result.to_csv()
+                                                        b64 = base64.b64encode(csv.encode()).decode()  # Codifica in base64
+                                                        href = f'<a href="data:file/csv;base64,{b64}" download="data.csv">Click to download the result in CSV</a>'
+                                                        st.markdown(href, unsafe_allow_html=True)
+        
+                       
 
