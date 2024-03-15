@@ -15,7 +15,39 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib import colormaps
 
+from sklearn.preprocessing import LabelEncoder
+import streamlit as st
 
+def check_for_outliers(dataframe, threshold=1.5):
+    # Calcola il valore del terzo quartile (Q3) e il primo quartile (Q1) per ciascuna feature
+    Q1 = dataframe.quantile(0.25)
+    Q3 = dataframe.quantile(0.75)
+
+    # Calcola l'intervallo interquartile (IQR) per ciascuna feature
+    IQR = Q3 - Q1
+
+    # Determina i limiti per il rilevamento degli outlier
+    lower_bound = Q1 - threshold * IQR
+    upper_bound = Q3 + threshold * IQR
+
+    # Controlla se ci sono valori che cadono al di fuori degli intervalli per ciascuna feature
+    outlier_present = ((dataframe < lower_bound) | (dataframe > upper_bound)).any().any()
+
+    # Restituisci True se ci sono outlier, altrimenti False
+    return outlier_present
+
+def encode_and_show_mapping(df):
+    for column in df.columns:
+        if df[column].dtype == 'object':
+            label_encoder = LabelEncoder()
+            df[column] = label_encoder.fit_transform(df[column])
+
+            # Stampa il mapping delle categorie solo se la colonna contiene stringhe
+            st.write("Mapping delle categorie per la colonna", column)
+            for i, category in enumerate(label_encoder.classes_):
+                st.write(f"{category} -> {i}")
+
+    return df
 def replace_outliers_with_median(df,feature):
     df_clean = df.copy()  # Copia il DataFrame originale per non modificarlo direttamente
 
@@ -74,7 +106,10 @@ def remove_outliers(df,feature):
     return df_clean
 
 def plot_boxplots(dataframe, feature):
-    num_plots = len(dataframe.columns) - 1  
+    # Seleziona solo le colonne con più di due valori unici
+    relevant_columns = [col for col in dataframe.columns if dataframe[col].nunique() > 2]
+
+    num_plots = len(relevant_columns)
     cols_per_row = 4 
 
     # Calcola il numero di righe necessarie
@@ -86,13 +121,13 @@ def plot_boxplots(dataframe, feature):
     # Flatten l'array di assi se è multidimensionale
     axes = axes.flatten()
 
-    # Itera sulle colonne del DataFrame escludendo feature
-    for i, col in enumerate(dataframe.drop(columns=feature)):
+    # Itera sulle colonne del DataFrame
+    for i, col in enumerate(relevant_columns):
         # Seleziona l'asse corrente
         ax = axes[i]
 
-        # Disegna il boxplot per la feature corrente con feature sulle x
-        sns.boxplot(x=feature, y=col, data=dataframe, ax=ax, palette='coolwarm', hue=feature, legend=False)
+        # Disegna il boxplot per la feature corrente
+        sns.boxplot(x=feature, y=col, data=dataframe, ax=ax, palette='coolwarm')
 
         # Imposta il titolo del boxplot
         ax.set_title(f'Boxplot di {col}')
@@ -100,7 +135,7 @@ def plot_boxplots(dataframe, feature):
         # Ruota le etichette sull'asse x per una migliore leggibilità
         ax.tick_params(axis='x', rotation=45)
 
-        # Imposta le etichette sull'asse y con precisione a tre cifre decimali
+        # Imposta le etichette sull'asse y con precisione a due cifre decimali
         ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{x:.2f}'))
 
     # Rimuovi gli assi vuoti se ce ne sono
@@ -112,11 +147,16 @@ def plot_boxplots(dataframe, feature):
 
     return fig
 
-def plot_boxplots_comparision(dataframe_1, dataframe_clean_1,feature):
-    dataframe=dataframe_1.copy()
-    dataframe_clean=dataframe_clean_1.copy()
-    num_plots = len(dataframe.columns) - 1 # Numero di colonne nel DataFrame escludendo feature e Dataset
-    cols_per_row = 4 
+
+def plot_boxplots_comparision(dataframe_1, dataframe_clean_1):
+    dataframe = dataframe_1.copy()
+    dataframe_clean = dataframe_clean_1.copy()
+    
+    # Filtra solo le colonne con più di due valori unici
+    relevant_columns = [col for col in dataframe.columns if dataframe[col].nunique() > 2]
+    
+    num_plots = len(relevant_columns)  # Numero di colonne nel DataFrame con più di due valori unici
+    cols_per_row = 4
 
     # Calcola il numero di righe necessarie
     num_rows = (num_plots - 1) // cols_per_row + 1
@@ -127,19 +167,18 @@ def plot_boxplots_comparision(dataframe_1, dataframe_clean_1,feature):
     # Flatten l'array di assi se è multidimensionale
     axes = axes.flatten()
 
-    # Concateniamo i DataFrame relevant e relevant_clean, aggiungendo una colonna 'Dataset' per distinguere tra i due
+    # Concatena i DataFrame relevant e relevant_clean, aggiungendo una colonna 'Dataset' per distinguere tra i due
     dataframe['Dataset'] = 'Prima'
     dataframe_clean['Dataset'] = 'Dopo'
 
-    # Uniamo i DataFrame
+    # Unisci i DataFrame
     combined_df = pd.concat([dataframe, dataframe_clean], ignore_index=True)
 
-    # Iteriamo su ogni feature
-    for i, col in enumerate(dataframe.columns):
-        if col != feature and col != 'Dataset':
-            ax = axes[i]
-            sns.boxplot(x='Dataset', y=col, data=combined_df, hue='Dataset', palette=["blue", "orange"], ax=ax)
-            ax.set_title(f'Rimozione Outlier di {col}')
+    # Itera su ogni feature con più di due valori unici
+    for i, col in enumerate(relevant_columns):
+        ax = axes[i]
+        sns.boxplot(x='Dataset', y=col, data=combined_df, hue='Dataset', palette=["blue", "orange"], ax=ax)
+        ax.set_title(f'Rimozione Outlier di {col}')
             
     # Rimuovi gli assi vuoti se ce ne sono
     for ax in axes[num_plots:]:
@@ -149,6 +188,7 @@ def plot_boxplots_comparision(dataframe_1, dataframe_clean_1,feature):
     plt.tight_layout()
 
     return fig
+
 
 def plot_bar_chart_df(df):
     fig, ax = plt.subplots()
