@@ -43,9 +43,9 @@ def encode_and_show_mapping(df):
             df[column] = label_encoder.fit_transform(df[column])
 
             # Stampa il mapping delle categorie solo se la colonna contiene stringhe
-            st.write("Mapping delle categorie per la colonna", column)
+            st.write("Convert the string in number for the column:", column,"")
             for i, category in enumerate(label_encoder.classes_):
-                st.write(f"{category} -> {i}")
+                st.write(f"Sobstitute {category} with -> {i}")
 
     return df
 def replace_outliers_with_median(df,feature):
