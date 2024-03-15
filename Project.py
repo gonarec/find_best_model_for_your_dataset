@@ -35,6 +35,7 @@ st.write("")
 st.write("")
 st.markdown("<p style='text-align: left; color: yellow;'>INSERT YOUR DATABASE:</p>", unsafe_allow_html=True)
 st.write("")
+st.write("Only use datasets with numbers or with a limited variance of words in the columns.")
 
 # Caricamento del file CSV e salvataggio del percorso in una variabile
 file = st.file_uploader("Select a CSV file:")
