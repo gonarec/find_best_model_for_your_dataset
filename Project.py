@@ -125,12 +125,12 @@ if file is not None:
                             
                             if cleaning_option == "Replace with mean":
                                 new_df=replace_outliers_with_mean(new_df,feature_to_classify)
-                                st.write("NaN values have been dropped.")
                             elif cleaning_option == "Replace with median":
                                 new_df=replace_outliers_with_median(new_df,feature_to_classify)
                             elif cleaning_option == "Remove outliners":
                                 new_df=remove_outliers(new_df,feature_to_classify)
-                            
+                                st.write("NaN values have been dropped.")
+                                
                             if cleaning_option is not None:
                                 st.markdown("<p style='color: yellow;'>THESE ARE YOUR NEW DATA:</p>", unsafe_allow_html=True)
                                 plt.figure(figsize=(14, 10))

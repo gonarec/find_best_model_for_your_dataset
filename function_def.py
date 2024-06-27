@@ -266,7 +266,7 @@ def classificator_evo (dataset, classifier, testsize):
   #  accuracy_dict['RandomForest']=round(accuracy,3)
 
     # Classificatore SVM con solo relevant feature
-    svm_classifier = SVC(kernel='rbf', C=1.0, gamma='scale', random_state=42)
+    svm_classifier = SVC(kernel='rbf', C=5.0, gamma='scale', random_state=42)
 
     svm_classifier.fit(x_train, y_train)
     y_pred = svm_classifier.predict(x_test)
