@@ -254,16 +254,16 @@ def classificator_evo (dataset, classifier, testsize):
     y_data=dataset.loc[:,classifier]
     x_train,x_test,y_train,y_test=train_test_split(x_data,y_data,test_size=testsize,random_state=10)
     
-    # RandomForestClassifier 
-    rf_model = RandomForestClassifier(n_estimators=100, random_state=20)
-    rf_model.fit(x_train, y_train)
+   ## RandomForestClassifier 
+    #rf_model = RandomForestClassifier(n_estimators=100, random_state=20)
+   # rf_model.fit(x_train, y_train)
 
-    y_pred = rf_model.predict(x_test)
+    #y_pred = rf_model.predict(x_test)
 
     # Valutazione delle prestazioni del modello
-    accuracy = accuracy_score(y_test, y_pred)
+   # accuracy = accuracy_score(y_test, y_pred)
     #print("Accuratezza del modello RandomForestClassifier: %.3f" %accuracy)
-    accuracy_dict['RandomForest']=round(accuracy,3)
+  #  accuracy_dict['RandomForest']=round(accuracy,3)
 
     # Classificatore SVM con solo relevant feature
     svm_classifier = SVC(kernel='rbf', C=1.0, gamma='scale', random_state=42)

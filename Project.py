@@ -109,7 +109,7 @@ if file is not None:
                 st.markdown("<p style='color: yellow;'>The dataset is clean there are not Nan values inside.</p>", unsafe_allow_html=True)
         
         with st.expander("DATA CLEANING - OUTLINER"):
-            if check_for_outliers==True:
+            if check_for_outliers(new_df)==True:
                 option1 = st.radio("Do you want to show the outliners?",  ("No","Yes"))
                 if option1=="Yes":
                     st.markdown("<p style='color: yellow;'>BOXPLOT FEATURES: </p>", unsafe_allow_html=True)
