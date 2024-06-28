@@ -1,3 +1,4 @@
+#LIBRERIE E FUNZIONI
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -9,37 +10,34 @@ from PIL import Image
 from function_def import replace_outliers_with_median, replace_outliers_with_mean, remove_outliers,restore_function_corr, check_for_outliers
 from function_def import  plot_boxplots, plot_boxplots_comparision, plot_bar_chart_df, plot_result,classificator_evo,encode_and_show_mapping
 
+#IMPAGINAZIONE
 
 image_left = Image.open("ROB.jpeg")
 image_right = Image.open("ROB.jpeg")
-
-# Disposizione delle colonne
 col1, col2, col3 = st.columns([1, 4, 1])
 
-# Colonna sinistra con l'immagine
 with col1:
     st.image(image_left, use_column_width=True)
 
-# Colonna centrale con il titolo
 with col2:
     st.markdown(
     "<h1 style='text-align: center; color: blue;'>FIND THE BEST MODEL TO CLASSIFY YOUR DATASET</h1>", 
     unsafe_allow_html=True)
     st.write("")
-    st.markdown("<p style='text-align: left; color: orange;'>This tool product the accuracy of Random Forest, SVM, Bayes Gaussian and Decision Tree algorithms.<br> The accuracy depends on yor dataset, you can improve the accuracy using the following cleaning methods. </p>", unsafe_allow_html=True)
-# Colonna destra con l'immagine
+    st.markdown("<p style='text-align: left; color: orange;'>This tool product the accuracy of Decision Tree, SVM and Bayes Gaussian classificators on the insert dataset. There are also some cleaning function to improve your model. <br>", unsafe_allow_html=True)
+
 with col3:
     st.image(image_right, use_column_width=True)
 
 st.write("")
 st.write("")
 st.markdown("<p style='text-align: left; color: yellow;'>INSERT YOUR DATABASE:</p>", unsafe_allow_html=True)
-st.write("Only use datasets with numbers or with a limited variance of words in the columns.")
+st.write("Only use datasets with numbers or dicotomic words.")
 
-# Caricamento del file CSV e salvataggio del percorso in una variabile
+
+# CARICAMENTO ED ELABORAZIONE FILE
 file = st.file_uploader("Select a CSV file:")
 
-# Elaborazione del file se è stato caricato
 if file is not None:
     df = pd.read_csv(file)
     st.markdown("<p style='color: yellow;'>THIS IS YOUR DATASET:</p>", unsafe_allow_html=True)
@@ -57,13 +55,13 @@ if file is not None:
             'Correlazione': corr_matrix.values[corr_index]
         })
     
-
- 
     # Creiamo il plot del heatmap
     #plt.figure(figsize=(8, 6))
     #sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".2f")
     #plt.title('Heatmap della matrice di correlazione')
     #st.pyplot(plt)
+
+## PARTE DI RIMOZIONE DEI NAN VALUE SE PRESENTI
 
         with st.expander("DATA CLEANING - REMOVE OF NAN VALUE"):        
             if new_df.isnull().values.any():
@@ -98,7 +96,6 @@ if file is not None:
                         st.dataframe(new_df) 
                         st.write("Size of Dataset after cleaning:", new_df.shape)  
 
-                        # Adding download button for cleaned DataFrame
                         csv = new_df.to_csv()
                         # Download button
                         st.download_button(label="Download the new CSV", data=csv, file_name="cleaned_data.csv", mime="text/csv")
@@ -108,7 +105,11 @@ if file is not None:
             else:
                 st.markdown("<p style='color: yellow;'>The dataset is clean there are not Nan values inside.</p>", unsafe_allow_html=True)
         
-        with st.expander("DATA CLEANING - OUTLINER"):
+
+
+## PARTE DI RIMOZIONE DEGLI OUTLINER SE PRESENTI
+
+        with st.expander("DATA CLEANING - OUTLINERS"):
             if check_for_outliers(new_df)==True:
                 option1 = st.radio("Do you want to show the outliners?",  ("No","Yes"))
                 if option1=="Yes":
@@ -129,8 +130,8 @@ if file is not None:
                                 new_df=replace_outliers_with_median(new_df,feature_to_classify)
                             elif cleaning_option == "Remove outliners":
                                 new_df=remove_outliers(new_df,feature_to_classify)
-                                st.write("NaN values have been dropped.")
-                                
+                                st.write("Outliners have been eliminated.")
+
                             if cleaning_option is not None:
                                 st.markdown("<p style='color: yellow;'>THESE ARE YOUR NEW DATA:</p>", unsafe_allow_html=True)
                                 plt.figure(figsize=(14, 10))
@@ -145,120 +146,57 @@ if file is not None:
             else:
                 st.markdown("<p style='color: yellow;'>You havent outliners in your dataset.</p>", unsafe_allow_html=True)
 
+
+
+## PARTE DI CLASSIFICAZIONE
+
         with st.expander("CLASSIFICATION:"):
-            result=pd.DataFrame()
+            result = pd.DataFrame()
             test_size = st.slider("Select the test size dimension:", min_value=0.0, max_value=0.9, step=0.05, value=0.0, key='slider')
-            if (feature_to_classify is not None and test_size != 0.0) :
+
+            counter = 0  # Inizializza un contatore per le chiavi uniche
+
+            while feature_to_classify is not None and test_size != 0.0:
                 loading_message = st.empty()
                 loading_message.info("Loading...")
                 result[test_size] = classificator_evo(new_df, feature_to_classify, test_size)
                 loading_message.empty()
+
                 plt.figure(figsize=(14, 10))
                 st.pyplot(plot_bar_chart_df(result[test_size]))
-            
-                opt = st.radio("Do you confront your different testsize?",  ("No, i want get another testsize","Yes, show me the results"), key='opt')
-                if opt == "Yes, show me the results":
-                    st.markdown("<p style='color: yellow;'>THESE ARE YOUR TEST:</p>", unsafe_allow_html=True)
-                    st.dataframe(result)
-                else:
-                    test_size = st.slider("Select the test size dimension:", min_value=0.0, max_value=0.9, step=0.05, value=0.0, key='slider1')
-                    if (feature_to_classify is not None and test_size != 0.0) :
-                        loading_message = st.empty()
-                        loading_message.info("Loading...")
-                        result[test_size] = classificator_evo(new_df, feature_to_classify, test_size)
-                        loading_message.empty()
-                        plt.figure(figsize=(14, 10))
-                        st.pyplot(plot_bar_chart_df(result[test_size]))
-                        opt = st.radio("Do you want confront your different testsize?",  ("No, i want get another testsize","Yes, show me the results"), key='opt1')
-                        if opt == "Yes, show me the results":
-                            st.markdown("<p style='color: yellow;'>THESE ARE YOUR TEST:</p>", unsafe_allow_html=True)
-                            st.dataframe(result)
-                            plt.figure(figsize=(14, 10))
-                            st.pyplot(plot_result(result))
-                        else:
-                            test_size = st.slider("Select the test size dimension:", min_value=0.0, max_value=0.9, step=0.05, value=0.0, key='slider2')
-                            if (feature_to_classify is not None and test_size != 0.0) :
-                                loading_message = st.empty()
-                                loading_message.info("Loading...")
-                                result[test_size] = classificator_evo(new_df, feature_to_classify, test_size)
-                                loading_message.empty()
-                                plt.figure(figsize=(14, 10))
-                                st.pyplot(plot_bar_chart_df(result[test_size]))
-                                opt = st.radio("Do you want confront your different testsize?",  ("No, i want get another testsize","Yes, show me the results"), key=f'opt2')
-                                if opt == "Yes, show me the results":
-                                    st.markdown("<p style='color: yellow;'>THESE ARE YOUR TEST:</p>", unsafe_allow_html=True)
-                                    st.dataframe(result)
-                                    plt.figure(figsize=(14, 10))
-                                    st.pyplot(plot_result(result))
-                                    csv=result.to_csv()
-                                    b64 = base64.b64encode(csv.encode()).decode()  # Codifica in base64
-                                    href = f'<a href="data:file/csv;base64,{b64}" download="data.csv">Click here for the CSV</a>'
-                                    st.markdown(href, unsafe_allow_html=True)
-                                else:
-                                    test_size = st.slider("Select the test size dimension:", min_value=0.0, max_value=0.9, step=0.05, value=0.0, key='slider3')
-                                    if (feature_to_classify is not None and test_size != 0.0) :
-                                        loading_message = st.empty()
-                                        loading_message.info("Loading...")
-                                        result[test_size] = classificator_evo(new_df, feature_to_classify, test_size)
-                                        loading_message.empty()
-                                        plt.figure(figsize=(14, 10))
-                                        st.pyplot(plot_bar_chart_df(result[test_size]))
-                                        opt = st.radio("Do you want confront your different testsize?",  ("No, i want get another testsize","Yes, show me the results"), key='opt3')
-                                        if opt == "Yes, show me the results":
-                                            st.markdown("<p style='color: yellow;'>THESE ARE YOUR TEST:</p>", unsafe_allow_html=True)
-                                            st.dataframe(result)
-                                            plt.figure(figsize=(14, 10))
-                                            st.pyplot(plot_result(result))
-                                            csv=result.to_csv()
-                                            b64 = base64.b64encode(csv.encode()).decode()  # Codifica in base64
-                                            href = f'<a href="data:file/csv;base64,{b64}" download="data.csv">Click to download the result in CSV</a>'
-                                            st.markdown(href, unsafe_allow_html=True)
-                                        else:
-                                            test_size = st.slider("Select the test size dimension:", min_value=0.0, max_value=0.9, step=0.05, value=0.0, key='slider4')
-                                            if (feature_to_classify is not None and test_size != 0.0) :
-                                                loading_message = st.empty()
-                                                loading_message.info("Loading...")
-                                                result[test_size] = classificator_evo(new_df, feature_to_classify, test_size)
-                                                loading_message.empty()
-                                                plt.figure(figsize=(14, 10))
-                                                st.pyplot(plot_bar_chart_df(result[test_size]))
-                                                opt = st.radio("Do you want confront your different testsize?",  ("No, i want get another testsize","Yes, show me the results"), key='opt4')
-                                                if opt == "Yes, show me the results":
-                                                    st.markdown("<p style='color: yellow;'>THESE ARE YOUR TEST:</p>", unsafe_allow_html=True)
-                                                    st.dataframe(result)
-                                                    plt.figure(figsize=(14, 10))
-                                                    st.pyplot(plot_result(result))
-                                                    csv=result.to_csv()
-                                                    b64 = base64.b64encode(csv.encode()).decode()  # Codifica in base64
-                                                    href = f'<a href="data:file/csv;base64,{b64}" download="data.csv">Click to download the result in CSV</a>'
-                                                    st.markdown(href, unsafe_allow_html=True)
-                                                else:
-                                                    test_size = st.slider("Select the test size dimension:", min_value=0.0, max_value=0.9, step=0.05, value=0.0, key='slider5')
-                                                    if (feature_to_classify is not None and test_size != 0.0) :
-                                                        loading_message = st.empty()
-                                                        loading_message.info("Loading...")
-                                                        result[test_size] = classificator_evo(new_df, feature_to_classify, test_size)
-                                                        loading_message.empty()
-                                                        plt.figure(figsize=(14, 10))
-                                                        st.pyplot(plot_bar_chart_df(result[test_size]))
-                                                        opt = st.radio("Do you want confront your different testsize?",  ("No, i want get another testsize","Yes, show me the results"), key='opt5')
-                                                        if opt == "Yes, show me the results":
-                                                            st.markdown("<p style='color: yellow;'>THESE ARE YOUR TEST:</p>", unsafe_allow_html=True)
-                                                            st.dataframe(result)
-                                                            plt.figure(figsize=(14, 10))
-                                                            st.pyplot(plot_result(result))
-                                                            csv=result.to_csv()
-                                                            b64 = base64.b64encode(csv.encode()).decode()  # Codifica in base64
-                                                            href = f'<a href="data:file/csv;base64,{b64}" download="data.csv">Click to download the result in CSV</a>'
-                                                            st.markdown(href, unsafe_allow_html=True)
-                                                        else:
-                                                            st.markdown("<p style='color: yellow;'>YOU CAN CONFRONT MAXIMUM SIX TESTSIZE VALUE </p>", unsafe_allow_html=True)
-                                                            plt.figure(figsize=(14, 10))
-                                                            st.pyplot(plot_result(result))
-                                                            csv = result.to_csv()
-                                                            b64 = base64.b64encode(csv.encode()).decode()  # Codifica in base64
-                                                            href = f'<a href="data:file/csv;base64,{b64}" download="data.csv">Click to download the result in CSV</a>'
-                                                            st.markdown(href, unsafe_allow_html=True)
-        
-                       
 
+                # Gestione chiavi uniche
+                slider_key = f'slider_{counter}'
+                counter += 1  
+                opt_key = f'opt_{counter}'  
+                counter += 1  
+
+                opt = st.radio("Do you want to confront your different test sizes?", ("No, I want to get another test size", "Yes, show me the results"), key=opt_key)
+
+                if opt == "Yes, show me the results":
+                    st.markdown("<p style='color: yellow;'>THESE ARE YOUR TESTS:</p>", unsafe_allow_html=True)
+                    st.dataframe(result)
+                    if not result.empty:
+                        plt.figure(figsize=(14, 10))
+                        st.pyplot(plot_result(result))
+                        csv = result.to_csv()
+                        b64 = base64.b64encode(csv.encode()).decode()  # Encode to base64
+                        href = f'<a href="data:file/csv;base64,{b64}" download="data.csv">Click to download the result in CSV</a>'
+                        st.markdown(href, unsafe_allow_html=True)
+                    else:
+                        st.markdown("<p style='color: red;'>No results to display.</p>", unsafe_allow_html=True)
+                    break
+                else:
+                    test_size = st.slider("Select the test size dimension:", min_value=0.0, max_value=0.9, step=0.05, value=0.0, key=slider_key)
+
+            if len(result) == 0:
+                st.markdown("<p style='color: yellow;'>YOU CAN CONFRONT MAXIMUM SIX TEST SIZE VALUES</p>", unsafe_allow_html=True)
+                plt.figure(figsize=(14, 10))
+                if not result.empty:
+                    st.pyplot(plot_result(result))
+                    csv = result.to_csv()
+                    b64 = base64.b64encode(csv.encode()).decode()  # Encode to base64
+                    href = f'<a href="data:file/csv;base64,{b64}" download="data.csv">Click to download the result in CSV</a>'
+                    st.markdown(href, unsafe_allow_html=True)
+                else:
+                    st.markdown("<p style='color: red;'>No results to display.</p>", unsafe_allow_html=True)
