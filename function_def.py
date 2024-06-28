@@ -279,7 +279,7 @@ def classificator_evo(dataset, classifier, testsize):
     }
 
     # Support Vector Machine (SVC)
-    svm_classifier = SVC(kernel='rbf', C=4.0, gamma='scale', random_state=42)
+    svm_classifier = SVC(kernel='rbf', C=3.0, gamma='scale', random_state=42)
     svm_classifier.fit(x_train, y_train)
     y_pred = svm_classifier.predict(x_test)
 
