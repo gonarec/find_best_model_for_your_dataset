@@ -10,6 +10,7 @@ from sklearn.metrics import silhouette_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -216,19 +217,22 @@ def plot_bar_chart_df(df):
     ax.set_ylim(0, max(values) * 1.2)  # Estendi l'asse y del 10%
     return fig
 
+
+
 def plot_result(res):
     num_cols = len(res.columns)
-    num_rows = (num_cols + 1) // 2 
+    num_rows = (num_cols + 1) // 2  
 
-    # Creazione del grafico a barre
     fig, axs = plt.subplots(num_rows, 2, figsize=(15, 5*num_rows))
 
-    # Itera sul DataFrame e crea i subplot
-    for i, (col_name, col_data) in enumerate(res.items()):
+    if num_rows == 1:
+        axs = np.expand_dims(axs, axis=0)
+
+    for i, col_name in enumerate(res.columns):
         row = i // 2
         col = i % 2
         keys = res.index
-        values = col_data
+        values = res[col_name]
         colors = plt.cm.RdBu(np.array(values) / max(values))
         
         for j, v in enumerate(values):
@@ -236,17 +240,18 @@ def plot_result(res):
         
         axs[row, col].bar(keys, values, color=colors)
         axs[row, col].set_ylabel('Valori')
-        axs[row, col].set_title('Test_size='+str(col_name))
+        axs[row, col].set_title(f'Test_size={col_name}')
         axs[row, col].set_xticks(keys)
         axs[row, col].set_xticklabels(keys, rotation=45, ha='right')
         axs[row, col].set_ylim(0, max(values) * 1.2)
 
     # Rimuovi i subplot non utilizzati
-    for i in range(num_cols, num_rows*2):
+    for i in range(num_cols, num_rows * 2):
         fig.delaxes(axs.flatten()[i])
 
     plt.tight_layout()
     return fig
+
 
 def classificator_evo (dataset, classifier, testsize):
     accuracy_dict={}
@@ -265,14 +270,19 @@ def classificator_evo (dataset, classifier, testsize):
     #print("Accuratezza del modello RandomForestClassifier: %.3f" %accuracy)
   #  accuracy_dict['RandomForest']=round(accuracy,3)
 
-    # Classificatore SVM con solo relevant feature
-    svm_classifier = SVC(kernel='rbf', C=5.0, gamma='scale', random_state=42)
+    mlp_classifier = MLPClassifier(max_iter=500, random_state=42)
+
+    mlp_classifier.fit(x_train, y_train)
+    y_pred = mlp_classifier.predict(x_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    accuracy_dict['NN']=round(accuracy,3)
+
+    svm_classifier = SVC(kernel='rbf', C=4.0, gamma='scale', random_state=42)
 
     svm_classifier.fit(x_train, y_train)
     y_pred = svm_classifier.predict(x_test)
 
     accuracy = accuracy_score(y_test, y_pred)
-    #print("Accuratezza del classificatore SVM: %.3f" %accuracy)
     accuracy_dict['SVM']=round(accuracy,3)
 
     # Crea il modello di regressione logistica con solo relevant
