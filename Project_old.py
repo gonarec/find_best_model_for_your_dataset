@@ -24,7 +24,7 @@ with col2:
     "<h1 style='text-align: center; color: blue;'>FIND THE BEST MODEL TO CLASSIFY YOUR DATASET</h1>", 
     unsafe_allow_html=True)
     st.write("")
-    st.markdown("<p style='text-align: left; color: orange;'>This tool product the accuracy of Decision Tree, Neural Network, SVM and Bayes Gaussian classificators on the insert dataset. There are also some cleaning function to improve your model. <br>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: left; color: orange;'>This tool product the accuracy of Decision Tree, Neural SVM and Bayes Gaussian classificators on the insert dataset. There are also some cleaning function to improve your model. <br>", unsafe_allow_html=True)
 
 with col3:
     st.image(image_right, use_column_width=True)

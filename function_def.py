@@ -4,7 +4,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from sklearn.linear_model import LogisticRegression
@@ -192,68 +192,135 @@ def plot_boxplots_comparision(dataframe_1, dataframe_clean_1):
 
 
 def plot_bar_chart_df(df):
-    fig, ax = plt.subplots()
-    if type(df) == pd.DataFrame:
-        keys = df.index.tolist()  # Ottieni gli indici del DataFrame come chiavi
-        values = df.iloc[:, 0].tolist()  # Ottieni i valori dalla prima colonna del DataFrame
-    elif type(df) == pd.Series:
-        keys = df.index.tolist()
-        values = df.tolist()
+    fig, ax = plt.subplots(figsize=(10, 6))
 
-    colors = plt.cm.RdBu(np.array(values) / max(values))  # Utilizza la mappa di colori "RdBu" in base ai valori massimi
+    metrics = ['accuracy', 'precision', 'recall', 'f1_score']
+    classifiers = df.index.tolist()
 
-    # Aggiungi valori sulle barplot
-    for i, v in enumerate(values):
-        ax.text(i, v + 0.01, f"{v:.2f}", ha='center', va='bottom')
-    
-    ax.bar(keys, values, color=colors)
-    xlabel=ax.set_xlabel('Algorithms',labelpad=10)
-    ylabel=ax.set_ylabel('Performance with testsize')
+    bar_width = 0.2
+    index = np.arange(len(classifiers))
 
-    # Cambia colore delle label sugli assi
-    xlabel.set_color('red')
-    ylabel.set_color('red')
-    #ax.set_xticks(axis='x', rotation=45, ha='right')
-    ax.set_ylim(0, max(values) * 1.2)  # Estendi l'asse y del 10%
-    return fig
+    for i, metric in enumerate(metrics):
+        values = df[metric].tolist()
+        bar_positions = index + i * bar_width
+        ax.bar(bar_positions, values, bar_width, label=metric)
 
-
-
-def plot_result(res):
-    num_cols = len(res.columns)
-    num_rows = (num_cols + 1) // 2  
-
-    fig, axs = plt.subplots(num_rows, 2, figsize=(15, 5*num_rows))
-
-    if num_rows == 1:
-        axs = np.expand_dims(axs, axis=0)
-
-    for i, col_name in enumerate(res.columns):
-        row = i // 2
-        col = i % 2
-        keys = res.index
-        values = res[col_name]
-        colors = plt.cm.RdBu(np.array(values) / max(values))
-        
         for j, v in enumerate(values):
-            axs[row, col].text(j, v + 0.01, f"{v:.2f}", ha='center', va='bottom')
-        
-        axs[row, col].bar(keys, values, color=colors)
-        axs[row, col].set_ylabel('Valori')
-        axs[row, col].set_title(f'Test_size={col_name}')
-        axs[row, col].set_xticks(keys)
-        axs[row, col].set_xticklabels(keys, rotation=45, ha='right')
-        axs[row, col].set_ylim(0, max(values) * 1.2)
-
-    # Rimuovi i subplot non utilizzati
-    for i in range(num_cols, num_rows * 2):
-        fig.delaxes(axs.flatten()[i])
+            ax.text(bar_positions[j], v + 0.01, f"{v:.2f}", ha='center', va='bottom')
+    
+    ax.set_xlabel('Classifiers')
+    ax.set_ylabel('Performance')
+    ax.set_title('Performance Metrics by Classifier')
+    ax.set_xticks(index + bar_width * (len(metrics) - 1) / 2)
+    ax.set_xticklabels(classifiers)
+    ax.legend()
+        # Impostazione dei limiti dell'asse y
+    max_value = df[metrics].values.max() * 1.2  
+    ax.set_ylim(0, max_value)
 
     plt.tight_layout()
     return fig
 
+def plot_result(res):
+    metrics = ['accuracy', 'precision', 'recall', 'f1_score']
+    classifiers = res.index.unique().tolist()
+    test_sizes = res.columns.levels[0].tolist()
 
-def classificator_evo (dataset, classifier, testsize):
+    fig, axs = plt.subplots(len(test_sizes), 1, figsize=(15, 5 * len(test_sizes)))
+
+    if len(test_sizes) == 1:
+        axs = [axs]
+
+    bar_width = 0.2
+    for i, test_size in enumerate(test_sizes):
+        ax = axs[i]
+        df = res[test_size]
+        index = np.arange(len(classifiers))
+
+        for j, metric in enumerate(metrics):
+            values = df[metric].tolist()
+            bar_positions = index + j * bar_width
+            ax.bar(bar_positions, values, bar_width, label=metric)
+
+            for k, v in enumerate(values):
+                ax.text(bar_positions[k], v + 0.01, f"{v:.2f}", ha='center', va='bottom')
+
+        ax.set_title(f'Test Size = {test_size}')
+        ax.set_xlabel('Classifiers')
+        ax.set_ylabel('Performance')
+        ax.set_xticks(index + bar_width * (len(metrics) - 1) / 2)
+        ax.set_xticklabels(classifiers)
+        ax.legend()
+
+            # Impostazione dei limiti dell'asse y
+        max_value = df[metrics].values.max() * 1.2  # Aumenta l'asse y del 20% rispetto al valore massimo
+        ax.set_ylim(0, max_value)
+
+    plt.tight_layout()
+    return fig
+
+def classificator_evo(dataset, classifier, testsize):
+    metrics_dict = {}
+
+    x_data = dataset.drop(columns=[classifier])
+    y_data = dataset[classifier]
+    x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, test_size=testsize, random_state=10)
+
+    # Neural Network (MLPClassifier)
+    mlp_classifier = MLPClassifier(max_iter=500, random_state=42)
+    mlp_classifier.fit(x_train, y_train)
+    y_pred = mlp_classifier.predict(x_test)
+
+    metrics_dict['NN'] = {
+        'accuracy': round(accuracy_score(y_test, y_pred), 3),
+        'precision': round(precision_score(y_test, y_pred, average='weighted'), 3),
+        'recall': round(recall_score(y_test, y_pred, average='weighted'), 3),
+        'f1_score': round(f1_score(y_test, y_pred, average='weighted'), 3)
+    }
+
+    # Support Vector Machine (SVC)
+    svm_classifier = SVC(kernel='rbf', C=4.0, gamma='scale', random_state=42)
+    svm_classifier.fit(x_train, y_train)
+    y_pred = svm_classifier.predict(x_test)
+
+    metrics_dict['SVM'] = {
+        'accuracy': round(accuracy_score(y_test, y_pred), 3),
+        'precision': round(precision_score(y_test, y_pred, average='weighted'), 3),
+        'recall': round(recall_score(y_test, y_pred, average='weighted'), 3),
+        'f1_score': round(f1_score(y_test, y_pred, average='weighted'), 3)
+    }
+
+    # Decision Tree Classifier
+    tree_classifier = DecisionTreeClassifier(random_state=42)
+    tree_classifier.fit(x_train, y_train)
+    y_pred = tree_classifier.predict(x_test)
+
+    metrics_dict['Tree'] = {
+        'accuracy': round(accuracy_score(y_test, y_pred), 3),
+        'precision': round(precision_score(y_test, y_pred, average='weighted'), 3),
+        'recall': round(recall_score(y_test, y_pred, average='weighted'), 3),
+        'f1_score': round(f1_score(y_test, y_pred, average='weighted'), 3)
+    }
+
+    # Naive Bayes Classifier
+    naive_bayes_classifier = GaussianNB()
+    naive_bayes_classifier.fit(x_train, y_train)
+    y_pred = naive_bayes_classifier.predict(x_test)
+
+    metrics_dict['Bayes'] = {
+        'accuracy': round(accuracy_score(y_test, y_pred), 3),
+        'precision': round(precision_score(y_test, y_pred, average='weighted'), 3),
+        'recall': round(recall_score(y_test, y_pred, average='weighted'), 3),
+        'f1_score': round(f1_score(y_test, y_pred, average='weighted'), 3)
+    }
+
+    # Convert metrics_dict to DataFrame and add testsize
+    df = pd.DataFrame.from_dict(metrics_dict, orient='index')
+    df['testsize'] = testsize
+
+    return df
+
+#def classificator_evo (dataset, classifier, testsize):
     accuracy_dict={}
     x_data=dataset.drop(columns=[classifier])
     y_data=dataset.loc[:,classifier]
@@ -317,6 +384,7 @@ def classificator_evo (dataset, classifier, testsize):
     accuracy_dict['Bayes']=round(accuracy,3)
 
     return accuracy_dict
+
 
 def restore_function_corr(corr_features, delta, dataframe, mean):
     labels_with_nan = dataframe.columns[dataframe.isna().any()].tolist()
