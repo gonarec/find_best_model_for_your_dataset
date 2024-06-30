@@ -150,6 +150,54 @@ try:
                 else:
                     st.markdown("<p style='color: yellow;'>You don't have outliers in your dataset.</p>", unsafe_allow_html=True)
 
+            with st.expander("MODEL SETTINGS"):
+
+                st.markdown("<p style='color: yellow;'>SVM:</p>", unsafe_allow_html=True)
+                svm_c= st.slider("Select C:", min_value=0.0, max_value=20.0, step=0.5, value=1.0, key='sliderC')
+                svm_kernel = st.selectbox("Select SVM kernel:", ("rbf",
+                                                                                      "linear",
+                                                                                      "poly",
+                                                                                       "sigmoid",
+                                                                                        "precomputed" ))
+
+                if svm_kernel == "rbf":
+                    svm_kernel='rbf'
+                elif svm_kernel == "linear":
+                    svm_kernel='linear'
+                elif svm_kernel == "poly":
+                    svm_kernel="poly"
+                elif svm_kernel == "sigmoid":
+                    svm_kernel='sigmoid'
+                elif svm_kernel == "precomputed":
+                    svm_kernel='precomputed'                
+
+                st.markdown("<p style='color: yellow;'>NN:</p>", unsafe_allow_html=True)
+                n_layers = st.slider('Number of hidden layer:', min_value=1, max_value=10, value=1)
+                hidden_layer_sizes = []
+                for i in range(n_layers):
+                    neurons = st.slider(f'Numero of neurons in the layer {i+1}', min_value=1, max_value=200, value=100)
+                    hidden_layer_sizes.append(neurons)
+                activation_nn = st.selectbox("Select NN activation function:", ("identity",
+                                                                                      "logistic",
+                                                                                      "tanh",
+                                                                                       "relu" ))
+
+                if activation_nn == "identity":
+                    activation_nn='identity'
+                elif activation_nn == "logistic":
+                    activation_nn='logistic'
+                elif activation_nn == "tanh":
+                    activation_nn='tanh'
+                elif activation_nn == "relu":
+                    activation_nn='relu'
+                
+                st.markdown("<p style='color: yellow;'>BAYES:</p>", unsafe_allow_html=True)
+                st.write("For the Bayes Gaussian Classificator are used the default parameters of sklearn.")
+
+                st.markdown("<p style='color: yellow;'>TREE:</p>", unsafe_allow_html=True)
+                criterion_tree = st.selectbox('Select Decision Tree criterion:', ('gini', 'entropy'), index=0)
+                splitter_tree = st.selectbox('Select splitter strategy for Decision Tree:', ('best', 'random'), index=0)
+
             ## PARTE DI CLASSIFICAZIONE
             with st.expander("CLASSIFICATION:"):
                 result = pd.DataFrame()
@@ -161,7 +209,7 @@ try:
                     loading_message = st.empty()
                     loading_message.info("Loading...")
 
-                    metrics_df = classificator_evo(df, feature_to_classify, test_size)
+                    metrics_df = classificator_evo(df, feature_to_classify, test_size, svm_c, svm_kernel, hidden_layer_sizes, activation_nn, criterion_tree, splitter_tree)
 
                     # Aggiungi multi-indice per gestire le diverse dimensioni del test set
                     metrics_df.columns = pd.MultiIndex.from_product([[f'Test Size {test_size}'], metrics_df.columns])

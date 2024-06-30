@@ -259,7 +259,7 @@ def plot_result(res):
     plt.tight_layout()
     return fig
 
-def classificator_evo(dataset, classifier, testsize):
+def classificator_evo(dataset, classifier, testsize, svm_c, svm_kernel, hidden_layer_sizes, activation_nn, criterion_tree, splitter_tree):
     metrics_dict = {}
 
     x_data = dataset.drop(columns=[classifier])
@@ -267,7 +267,7 @@ def classificator_evo(dataset, classifier, testsize):
     x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, test_size=testsize, random_state=10)
 
     # Neural Network (MLPClassifier)
-    mlp_classifier = MLPClassifier(max_iter=500, random_state=42)
+    mlp_classifier = MLPClassifier(random_state=42, hidden_layer_sizes=tuple(hidden_layer_sizes), activation=activation_nn)
     mlp_classifier.fit(x_train, y_train)
     y_pred = mlp_classifier.predict(x_test)
 
@@ -279,7 +279,7 @@ def classificator_evo(dataset, classifier, testsize):
     }
 
     # Support Vector Machine (SVC)
-    svm_classifier = SVC(kernel='rbf', C=3.0, gamma='scale', random_state=42)
+    svm_classifier = SVC(kernel=svm_kernel, C=svm_c, gamma='scale', random_state=42)
     svm_classifier.fit(x_train, y_train)
     y_pred = svm_classifier.predict(x_test)
 
@@ -291,7 +291,7 @@ def classificator_evo(dataset, classifier, testsize):
     }
 
     # Decision Tree Classifier
-    tree_classifier = DecisionTreeClassifier(random_state=42)
+    tree_classifier = DecisionTreeClassifier(random_state=42, criterion=criterion_tree,splitter=splitter_tree)
     tree_classifier.fit(x_train, y_train)
     y_pred = tree_classifier.predict(x_test)
 
