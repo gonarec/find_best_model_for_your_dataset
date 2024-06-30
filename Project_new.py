@@ -120,9 +120,7 @@ try:
 
                         if option == "Yes":
                             st.write("Now choose how you want to manage the outliers.")
-                            cleaning_option = st.selectbox("Select cleaning function:", ("Replace with mean",
-                                                                                      "Replace with median",
-                                                                                      "Remove outliers"))
+                            cleaning_option = st.selectbox("Select cleaning function:", ("Replace with mean","Replace with median","Remove outliers"))
 
                             if cleaning_option == "Replace with mean":
                                 df = replace_outliers_with_mean(df, feature_to_classify)
@@ -154,11 +152,7 @@ try:
 
                 st.markdown("<p style='color: yellow;'>SVM:</p>", unsafe_allow_html=True)
                 svm_c= st.slider("Select C:", min_value=0.0, max_value=20.0, step=0.5, value=1.0, key='sliderC')
-                svm_kernel = st.selectbox("Select SVM kernel:", ("rbf",
-                                                                                      "linear",
-                                                                                      "poly",
-                                                                                       "sigmoid",
-                                                                                        "precomputed" ))
+                svm_kernel = st.selectbox("Select SVM kernel:", ("rbf","linear","poly","sigmoid","precomputed" ))
 
                 if svm_kernel == "rbf":
                     svm_kernel='rbf'
@@ -177,10 +171,7 @@ try:
                 for i in range(n_layers):
                     neurons = st.slider(f'Numero of neurons in the layer {i+1}', min_value=1, max_value=200, value=100)
                     hidden_layer_sizes.append(neurons)
-                activation_nn = st.selectbox("Select NN activation function:", ("identity",
-                                                                                      "logistic",
-                                                                                      "tanh",
-                                                                                       "relu" ))
+                activation_nn = st.selectbox("Select NN activation function:", ("identity","logistic","tanh","relu" ))
 
                 if activation_nn == "identity":
                     activation_nn='identity'
