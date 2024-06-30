@@ -74,7 +74,6 @@ try:
                                                                                   "Fill NaN with median of the column",
                                                                                   "Fill NaN with mean of correlated data",
                                                                                   "Fill NaN with median of correlated data"))
-
                         if cleaning_option == "Drop rows with NaN":
                             df = df.dropna()
                             st.write("NaN values have been dropped.")
@@ -120,8 +119,8 @@ try:
 
                         if option == "Yes":
                             st.write("Now choose how you want to manage the outliers.")
-                            cleaning_option = st.selectbox("Select cleaning function:", ("Replace with mean","Replace with median","Remove outliers"))
 
+                            cleaning_option = st.selectbox("Select cleaning function:", ("Replace with mean","Replace with median","Remove outliers"))
                             if cleaning_option == "Replace with mean":
                                 df = replace_outliers_with_mean(df, feature_to_classify)
                                 st.write("Outliers have been replaced with mean.")
@@ -151,9 +150,9 @@ try:
             with st.expander("MODEL SETTINGS"):
 
                 st.markdown("<p style='color: yellow;'>SVM:</p>", unsafe_allow_html=True)
+
                 svm_c= st.slider("Select C:", min_value=0.0, max_value=20.0, step=0.5, value=1.0, key='sliderC')
                 svm_kernel = st.selectbox("Select SVM kernel:", ("rbf","linear","poly","sigmoid","precomputed" ))
-
                 if svm_kernel == "rbf":
                     svm_kernel='rbf'
                 elif svm_kernel == "linear":
@@ -165,14 +164,16 @@ try:
                 elif svm_kernel == "precomputed":
                     svm_kernel='precomputed'                
 
-                st.markdown("<p style='color: yellow;'>NN:</p>", unsafe_allow_html=True)
+
+                st.markdown("<p style='color: yellow;'>NEURAL NETWORK:</p>", unsafe_allow_html=True)
+
                 n_layers = st.slider('Number of hidden layer:', min_value=1, max_value=10, value=1)
                 hidden_layer_sizes = []
                 for i in range(n_layers):
                     neurons = st.slider(f'Numero of neurons in the layer {i+1}', min_value=1, max_value=200, value=100)
                     hidden_layer_sizes.append(neurons)
-                activation_nn = st.selectbox("Select NN activation function:", ("identity","logistic","tanh","relu" ))
 
+                activation_nn = st.selectbox("Select NN activation function:", ("identity","logistic","tanh","relu" ))
                 if activation_nn == "identity":
                     activation_nn='identity'
                 elif activation_nn == "logistic":
@@ -182,12 +183,16 @@ try:
                 elif activation_nn == "relu":
                     activation_nn='relu'
                 
+
                 st.markdown("<p style='color: yellow;'>BAYES:</p>", unsafe_allow_html=True)
+
                 st.write("For the Bayes Gaussian Classificator are used the default parameters of sklearn.")
 
-                st.markdown("<p style='color: yellow;'>TREE:</p>", unsafe_allow_html=True)
+
+                st.markdown("<p style='color: yellow;'>DECISION TREE:</p>", unsafe_allow_html=True)
                 criterion_tree = st.selectbox('Select Decision Tree criterion:', ('gini', 'entropy'), index=0)
                 splitter_tree = st.selectbox('Select splitter strategy for Decision Tree:', ('best', 'random'), index=0)
+
 
             ## PARTE DI CLASSIFICAZIONE
             with st.expander("CLASSIFICATION:"):
