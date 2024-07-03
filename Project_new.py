@@ -12,13 +12,11 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.naive_bayes import GaussianNB
-from function_def import replace_outliers_with_median, replace_outliers_with_mean, remove_outliers,restore_function_corr, check_for_outliers
+from function_def import replace_outliers,restore_function_corr, check_for_outliers
 from function_def import  plot_boxplots, plot_boxplots_comparision, plot_bar_chart_df, plot_result,classificator_evo,encode_and_show_mapping
 
-# Impostazione della pagina Streamlit
+# IMPOSTAZIONI PAGINA INIZIALE
 st.set_page_config(page_title="Dataset Classifier", layout="wide")
-
-# Layout delle immagini e del titolo
 image_left = Image.open("ROB.jpeg")
 image_right = Image.open("ROB.jpeg")
 col1, col2, col3 = st.columns([1, 4, 1])
@@ -39,7 +37,7 @@ st.write("")
 st.markdown("<p style='text-align: left; color: yellow;'>INSERT YOUR DATABASE:</p>", unsafe_allow_html=True)
 st.write("Only use datasets with numerical or binary categorical values.")
 
-# Caricamento del file CSV
+# CARICAMENTO DATASET
 file = st.file_uploader("Select a CSV file:")
 
 try:
@@ -52,21 +50,25 @@ try:
         feature_to_classify = st.text_input("Which feature do you want to classify?", None)
 
         if feature_to_classify is not None:
-            df = encode_and_show_mapping(df)
-            corr_matrix = df.corr().abs()
-            corr_index = np.where(np.triu(corr_matrix, k=1) > 0.20)
-            corr_features = pd.DataFrame({
-                'Feature1': corr_matrix.columns[corr_index[0]],
-                'Feature2': corr_matrix.columns[corr_index[1]],
-                'Correlation': corr_matrix.values[corr_index]
-            })
-
+            df = encode_and_show_mapping(df,feature_to_classify)
+            
+            
+            ##DATA CLEANING
             with st.expander("DATA CLEANING - REMOVE OF NAN VALUE"):
                 if df.isnull().values.any():
                     st.markdown("<p style='color: yellow;'>There are Nan values in your Dataset.</p>", unsafe_allow_html=True)
                     option = st.radio("Do you want to remove the Nan values?", ("No", "Yes"))
 
                     if option == "Yes":
+
+                        #Calcolo feature correlate, creazione nuovo df correlazione
+                        corr_matrix = df.corr().abs()
+                        corr_index = np.where(np.triu(corr_matrix, k=1) > 0.20)
+                        corr_features = pd.DataFrame({
+                            'Feature1': corr_matrix.columns[corr_index[0]],
+                            'Feature2': corr_matrix.columns[corr_index[1]],
+                            'Correlation': corr_matrix.values[corr_index] })
+                        
                         st.markdown("<p style='color: yellow;'>You chose to remove Nan values.</p>", unsafe_allow_html=True)
                         st.write("Now choose how you want to remove the Nan values.")
 
@@ -105,10 +107,11 @@ try:
                     elif option == "No":
                         st.markdown("<p style='color: yellow;'>If you don't remove the Nan values, the performance of the classification can be compromised.</p>", unsafe_allow_html=True)
                 else:
-                    st.markdown("<p style='color: yellow;'>The dataset is clean; there are no Nan values.</p>", unsafe_allow_html=True)
+                    st.markdown("<p style='color: yellow;'>The dataset is clean; there are not Nan values.</p>", unsafe_allow_html=True)
 
             with st.expander("DATA CLEANING - OUTLIERS"):
                 if check_for_outliers(df):
+                    old_df=df.copy()
                     option = st.radio("Do you want to show the outliers?", ("No", "Yes"))
                     if option == "Yes":
                         st.markdown("<p style='color: yellow;'>BOXPLOT FEATURES: </p>", unsafe_allow_html=True)
@@ -122,21 +125,21 @@ try:
 
                             cleaning_option = st.selectbox("Select cleaning function:", ("Replace with mean","Replace with median","Remove outliers"))
                             if cleaning_option == "Replace with mean":
-                                df = replace_outliers_with_mean(df, feature_to_classify)
+                                df = replace_outliers(df, feature_to_classify,'mean')
                                 st.write("Outliers have been replaced with mean.")
 
                             elif cleaning_option == "Replace with median":
-                                df = replace_outliers_with_median(df, feature_to_classify)
+                                df = replace_outliers(df, feature_to_classify,'median')
                                 st.write("Outliers have been replaced with median.")
 
                             elif cleaning_option == "Remove outliers":
-                                df = remove_outliers(df, feature_to_classify)
+                                df = replace_outliers(df, feature_to_classify,'remove')
                                 st.write("Outliers have been removed.")
 
                             if cleaning_option is not None:
                                 st.markdown("<p style='color: yellow;'>This is your new dataset after handling outliers:</p>", unsafe_allow_html=True)
                                 plt.figure(figsize=(14, 10))
-                                st.pyplot(plot_boxplots_comparision(df, feature_to_classify))
+                                st.pyplot(plot_boxplots_comparision(old_df,df,feature_to_classify))
                                 st.write("Size of Dataset after cleaning:", df.shape)
 
                                 csv = df.to_csv(index=False)

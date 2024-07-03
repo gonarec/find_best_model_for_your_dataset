@@ -24,52 +24,54 @@ def check_for_outliers(dataframe, threshold=1.5):
     Q1 = dataframe.quantile(0.25)
     Q3 = dataframe.quantile(0.75)
 
-    # Calcola l'intervallo interquartile (IQR) per ciascuna feature
     IQR = Q3 - Q1
-
-    # Determina i limiti per il rilevamento degli outlier
+    #Metodo comune per valutare outliners
     lower_bound = Q1 - threshold * IQR
     upper_bound = Q3 + threshold * IQR
 
     # Controlla se ci sono valori che cadono al di fuori degli intervalli per ciascuna feature
     outlier_present = ((dataframe < lower_bound) | (dataframe > upper_bound)).any().any()
-
-    # Restituisci True se ci sono outlier, altrimenti False
+    #primo any per ogni valore di colonna secondo per vedere se c'è colonna con outliners
     return outlier_present
 
-def encode_and_show_mapping(df):
+def encode_and_show_mapping(df,feature):
     for column in df.columns:
-        if df[column].dtype == 'object':
+        if df[column].dtype == 'object': #controllo se col contiene stringhe
             label_encoder = LabelEncoder()
             df[column] = label_encoder.fit_transform(df[column])
-
-            # Stampa il mapping delle categorie solo se la colonna contiene stringhe
             st.write("Convert the string in number for the column:", column,"")
-            for i, category in enumerate(label_encoder.classes_):
-                st.write(f"Sobstitute {category} with -> {i}")
-
     return df
-def replace_outliers_with_median(df,feature):
-    df_clean = df.copy()  # Copia il DataFrame originale per non modificarlo direttamente
 
-    for col in df.columns:
+def replace_outliers(df,feature,scelta):
+    df_clean = df.copy()  
+
+    for col in df_clean.columns:
         if col != feature:
-            q1 = df[col].quantile(0.25)  # Calcola il primo quartile
-            q3 = df[col].quantile(0.75)  # Calcola il terzo quartile
-            iqr = q3 - q1  # Calcola l'interquartile range (IQR)
+            Q1 = df_clean.quantile(0.25)
+            Q3 = df_clean.quantile(0.75)
 
-            # Calcola i limiti per gli outlier
-            lower_bound = q1 - 1.5 * iqr
-            upper_bound = q3 + 1.5 * iqr
+            IQR = Q3 - Q1
 
-            # Sostituisci gli outlier con la mediana
-            median = df_clean[col].median()
-            df_clean[col] = df_clean[col].apply(lambda x: median if x < lower_bound or x > upper_bound else x)
+            lower_bound = Q1 - 1.5 * IQR
+            upper_bound = Q3 + 1.5 * IQR
+            
+            if scelta == 'median':
+                median = df_clean[col].median()
+                df_clean[col] = df_clean[col].apply(lambda x: median if x < lower_bound or x > upper_bound else x)
+            
+            elif scelta == 'mean':
+                mean = df_clean[col].mean()
+                df_clean[col] = df_clean[col].apply(lambda x: mean if x < lower_bound or x > upper_bound else x)
+
+            elif scelta == 'remove':
+                df_clean = df_clean[(df_clean[col] >= lower_bound) & (df_clean[col] <= upper_bound)]
+
+
 
     return df_clean
 
-def replace_outliers_with_mean(df,feature):
-    df_clean = df.copy()  # Copia il DataFrame originale per non modificarlo direttamente
+#def replace_outliers_with_mean(df,feature):
+    df_clean = df.copy()  
 
     for col in df.columns:
         if col != feature:
@@ -87,9 +89,9 @@ def replace_outliers_with_mean(df,feature):
 
     return df_clean
 
-def remove_outliers(df,feature):
+#def remove_outliers(df,feature):
 
-    df_clean = df.copy()  # Copia il DataFrame originale per non modificarlo direttamente
+    df_clean = df.copy()  
 
     for col in df.columns:
         if col != feature:
@@ -107,85 +109,56 @@ def remove_outliers(df,feature):
     return df_clean
 
 def plot_boxplots(dataframe, feature):
-    # Seleziona solo le colonne con più di due valori unici
-    relevant_columns = [col for col in dataframe.columns if dataframe[col].nunique() > 2]
-
+ 
+    relevant_columns = [col for col in dataframe.columns if dataframe[col].nunique() > 2 and col != feature]
     num_plots = len(relevant_columns)
     cols_per_row = 4 
-
-    # Calcola il numero di righe necessarie
     num_rows = (num_plots - 1) // cols_per_row + 1
 
-    # Crea il layout dei subplot
     fig, axes = plt.subplots(num_rows, cols_per_row, figsize=(15, 5 * num_rows))
-
-    # Flatten l'array di assi se è multidimensionale
     axes = axes.flatten()
 
-    # Itera sulle colonne del DataFrame
     for i, col in enumerate(relevant_columns):
-        # Seleziona l'asse corrente
-        ax = axes[i]
+       
+        sns.boxplot(x=feature, y=col, data=dataframe, ax=axes[i], palette='coolwarm', hue=feature, legend=False)
 
-        # Disegna il boxplot per la feature corrente
-        sns.boxplot(x=feature, y=col, data=dataframe, ax=ax, palette='coolwarm')
+        axes[i].set_title(f'Boxplot di {col}')
+        axes[i].tick_params(axis='x', rotation=45)
 
-        # Imposta il titolo del boxplot
-        ax.set_title(f'Boxplot di {col}')
-
-        # Ruota le etichette sull'asse x per una migliore leggibilità
-        ax.tick_params(axis='x', rotation=45)
-
-        # Imposta le etichette sull'asse y con precisione a due cifre decimali
-        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{x:.2f}'))
-
-    # Rimuovi gli assi vuoti se ce ne sono
+    # rimouove assi in più 
     for ax in axes[num_plots:]:
         ax.remove()
-
-    # Imposta il layout dei subplot
+    #migliora il layout
     plt.tight_layout()
 
     return fig
 
 
-def plot_boxplots_comparision(dataframe_1, dataframe_clean_1):
+def plot_boxplots_comparision(dataframe_1, dataframe_clean_1,feature):
     dataframe = dataframe_1.copy()
     dataframe_clean = dataframe_clean_1.copy()
     
-    # Filtra solo le colonne con più di due valori unici
-    relevant_columns = [col for col in dataframe.columns if dataframe[col].nunique() > 2]
+    relevant_columns = [col for col in dataframe.columns if dataframe[col].nunique() > 2 and col != feature]
     
-    num_plots = len(relevant_columns)  # Numero di colonne nel DataFrame con più di due valori unici
+    num_plots = len(relevant_columns)  
     cols_per_row = 4
-
-    # Calcola il numero di righe necessarie
     num_rows = (num_plots - 1) // cols_per_row + 1
 
-    # Crea il layout dei subplot
     fig, axes = plt.subplots(num_rows, cols_per_row, figsize=(15, 5 * num_rows))
-
-    # Flatten l'array di assi se è multidimensionale
     axes = axes.flatten()
 
     # Concatena i DataFrame relevant e relevant_clean, aggiungendo una colonna 'Dataset' per distinguere tra i due
     dataframe['Dataset'] = 'Prima'
     dataframe_clean['Dataset'] = 'Dopo'
-
-    # Unisci i DataFrame
     combined_df = pd.concat([dataframe, dataframe_clean], ignore_index=True)
 
-    # Itera su ogni feature con più di due valori unici
     for i, col in enumerate(relevant_columns):
-        ax = axes[i]
-        sns.boxplot(x='Dataset', y=col, data=combined_df, hue='Dataset', palette=["blue", "orange"], ax=ax)
-        ax.set_title(f'Rimozione Outlier di {col}')
+        sns.boxplot(x='Dataset', y=col, data=combined_df, hue='Dataset', palette=["blue", "orange"], ax=axes[i])
+        axes[i].set_title(f'Rimozione Outlier di {col}')
             
-    # Rimuovi gli assi vuoti se ce ne sono
     for ax in axes[num_plots:]:
         ax.remove()
 
-    # Imposta il layout dei subplot
     plt.tight_layout()
 
     return fig
@@ -389,14 +362,14 @@ def classificator_evo(dataset, classifier, testsize, svm_c, svm_kernel, hidden_l
 def restore_function_corr(corr_features, delta, dataframe, mean):
     labels_with_nan = dataframe.columns[dataframe.isna().any()].tolist()
     for label in labels_with_nan:
-        #Sostituisce le label in Feature2 da confrontare e le mette in Feature1 di relevant row
         relevant_rows = corr_features[(corr_features['Feature1'] == label) | (corr_features['Feature2'] == label)]
+        #Se label trovata in Feature 2 viene messa in Feature1
         swap_mask = relevant_rows['Feature2'] == label
         relevant_rows.loc[swap_mask, ['Feature1', 'Feature2']] = relevant_rows.loc[swap_mask, ['Feature2', 'Feature1']].values
-        relevant_rows = relevant_rows.sort_values(by='Correlazione', ascending=False)
+        relevant_rows = relevant_rows.sort_values(by='Correlation', ascending=False)
+        #rimette gli indic apposto dopo il filtraggio
         relevant_rows.reset_index(drop=True, inplace=True)
 
-        #dove non ce una seconda feature ne crea una fittizia di Nan
         try:
             second_corr_label_value = relevant_rows.iloc[1]['Feature2']
         except IndexError:
