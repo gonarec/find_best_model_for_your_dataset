@@ -47,8 +47,8 @@ def replace_outliers(df,feature,scelta):
 
     for col in df_clean.columns:
         if col != feature:
-            Q1 = df_clean.quantile(0.25)
-            Q3 = df_clean.quantile(0.75)
+            Q1 = df_clean[col].quantile(0.25)
+            Q3 = df_clean[col].quantile(0.75)
 
             IQR = Q3 - Q1
 
