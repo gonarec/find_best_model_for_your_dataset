@@ -35,7 +35,7 @@ with col3:
 st.write("")
 st.write("")
 st.markdown("<p style='text-align: left; color: yellow;'>INSERT YOUR DATABASE:</p>", unsafe_allow_html=True)
-st.write("Only use datasets with numerical or binary categorical values.")
+st.write("Only use datasets with numerical or categorical values.")
 
 # CARICAMENTO DATASET
 file = st.file_uploader("Select a CSV file:")
@@ -210,7 +210,7 @@ try:
 
                     metrics_df = classificator_evo(df, feature_to_classify, test_size, svm_c, svm_kernel, hidden_layer_sizes, activation_nn, criterion_tree, splitter_tree)
 
-                    # Aggiungi multi-indice per gestire le diverse dimensioni del test set
+                    # multi-indice per gestire le diverse dimensioni del test set
                     metrics_df.columns = pd.MultiIndex.from_product([[f'Test Size {test_size}'], metrics_df.columns])
 
                     if result.empty:
@@ -235,7 +235,6 @@ try:
                         performance_columns = result.columns.get_level_values(1)
                         performance_columns = performance_columns[~performance_columns.str.startswith('Test Size')]
 
-                        # Filtra il DataFrame result per mantenere solo le colonne di performance
                         result_to_display = result.loc[:, (slice(None), performance_columns)]
 
                         st.dataframe(result_to_display)
@@ -254,7 +253,5 @@ try:
                     else:
                         test_size = st.slider("Select the test size dimension:", min_value=0.0, max_value=0.9, step=0.05, value=0.0, key=slider_key)
 
-                if not result.empty:
-                    plt.figure(figsize=(14, 10))
 except Exception as e:
     st.error(f"An error occurred: {str(e)}")

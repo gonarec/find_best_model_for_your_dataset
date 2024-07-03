@@ -168,8 +168,7 @@ def plot_bar_chart_df(df):
     fig, ax = plt.subplots(figsize=(10, 6))
 
     metrics = ['accuracy', 'precision', 'recall', 'f1_score']
-    classifiers = df.index.tolist()
-
+    classifiers = df.index.tolist()    
     bar_width = 0.2
     index = np.arange(len(classifiers))
 
@@ -179,15 +178,13 @@ def plot_bar_chart_df(df):
         ax.bar(bar_positions, values, bar_width, label=metric)
 
         for j, v in enumerate(values):
-            ax.text(bar_positions[j], v + 0.01, f"{v:.2f}", ha='center', va='bottom')
+            ax.text(bar_positions[j], v , f"{v:.2f}", ha='center', va='bottom')
     
     ax.set_xlabel('Classifiers')
     ax.set_ylabel('Performance')
     ax.set_title('Performance Metrics by Classifier')
     ax.set_xticks(index + bar_width * (len(metrics) - 1) / 2)
     ax.set_xticklabels(classifiers)
-    ax.legend()
-        # Impostazione dei limiti dell'asse y
     max_value = df[metrics].values.max() * 1.2  
     ax.set_ylim(0, max_value)
 
@@ -225,9 +222,7 @@ def plot_result(res):
         ax.set_xticklabels(classifiers)
         ax.legend()
 
-            # Impostazione dei limiti dell'asse y
-        max_value = df[metrics].values.max() * 1.2  # Aumenta l'asse y del 20% rispetto al valore massimo
-        ax.set_ylim(0, max_value)
+        max_value = df[metrics].values.max() * 1.2  
 
     plt.tight_layout()
     return fig
