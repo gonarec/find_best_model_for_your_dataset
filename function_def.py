@@ -207,8 +207,8 @@ def classificator_evo(dataset, classifier, testsize, svm_c, svm_kernel, hidden_l
 
     metrics_dict['NN'] = {
         'accuracy': round(accuracy_score(y_test, y_pred), 3),
-        'precision': round(precision_score(y_test, y_pred, average='weighted'), 3),
-        'recall': round(recall_score(y_test, y_pred, average='weighted'), 3),
+        'precision': round(precision_score(y_test, y_pred, average='weighted',zero_division=0), 3),
+        'recall': round(recall_score(y_test, y_pred, average='weighted',zero_division=0), 3),
         'f1_score': round(f1_score(y_test, y_pred, average='weighted'), 3)
     }
 
@@ -219,8 +219,8 @@ def classificator_evo(dataset, classifier, testsize, svm_c, svm_kernel, hidden_l
 
     metrics_dict['SVM'] = {
         'accuracy': round(accuracy_score(y_test, y_pred), 3),
-        'precision': round(precision_score(y_test, y_pred, average='weighted'), 3),
-        'recall': round(recall_score(y_test, y_pred, average='weighted'), 3),
+        'precision': round(precision_score(y_test, y_pred, average='weighted',zero_division=0), 3),
+        'recall': round(recall_score(y_test, y_pred, average='weighted',zero_division=0), 3),
         'f1_score': round(f1_score(y_test, y_pred, average='weighted'), 3)
     }
 
@@ -231,8 +231,8 @@ def classificator_evo(dataset, classifier, testsize, svm_c, svm_kernel, hidden_l
 
     metrics_dict['Tree'] = {
         'accuracy': round(accuracy_score(y_test, y_pred), 3),
-        'precision': round(precision_score(y_test, y_pred, average='weighted'), 3),
-        'recall': round(recall_score(y_test, y_pred, average='weighted'), 3),
+        'precision': round(precision_score(y_test, y_pred, average='weighted',zero_division=0), 3),
+        'recall': round(recall_score(y_test, y_pred, average='weighted',zero_division=0), 3),
         'f1_score': round(f1_score(y_test, y_pred, average='weighted'), 3)
     }
 
@@ -243,8 +243,8 @@ def classificator_evo(dataset, classifier, testsize, svm_c, svm_kernel, hidden_l
 
     metrics_dict['Bayes'] = {
         'accuracy': round(accuracy_score(y_test, y_pred), 3),
-        'precision': round(precision_score(y_test, y_pred, average='weighted'), 3),
-        'recall': round(recall_score(y_test, y_pred, average='weighted'), 3),
+        'precision': round(precision_score(y_test, y_pred, average='weighted',zero_division=0), 3),
+        'recall': round(recall_score(y_test, y_pred, average='weighted',zero_division=0), 3),
         'f1_score': round(f1_score(y_test, y_pred, average='weighted'), 3)
     }
 
