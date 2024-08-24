@@ -25,7 +25,7 @@ def check_for_outliers(dataframe, threshold=1.5):
     Q3 = dataframe.quantile(0.75)
 
     IQR = Q3 - Q1
-    #Metodo comune per valutare outliners
+    
     lower_bound = Q1 - threshold * IQR
     upper_bound = Q3 + threshold * IQR
 
@@ -41,6 +41,7 @@ def encode_and_show_mapping(df,feature):
             df[column] = label_encoder.fit_transform(df[column])
             st.write("Convert the string in number for the column:", column,"")
     return df
+
 
 def replace_outliers(df,feature,scelta):
     df_clean = df.copy()  
@@ -70,43 +71,6 @@ def replace_outliers(df,feature,scelta):
 
     return df_clean
 
-#def replace_outliers_with_mean(df,feature):
-    df_clean = df.copy()  
-
-    for col in df.columns:
-        if col != feature:
-            q1 = df[col].quantile(0.25)  # Calcola il primo quartile
-            q3 = df[col].quantile(0.75)  # Calcola il terzo quartile
-            iqr = q3 - q1  # Calcola l'interquartile range (IQR)
-
-            # Calcola i limiti per gli outlier
-            lower_bound = q1 - 1.5 * iqr
-            upper_bound = q3 + 1.5 * iqr
-
-            # Sostituisci gli outlier con la mediana
-            mean = df_clean[col].mean()
-            df_clean[col] = df_clean[col].apply(lambda x: mean if x < lower_bound or x > upper_bound else x)
-
-    return df_clean
-
-#def remove_outliers(df,feature):
-
-    df_clean = df.copy()  
-
-    for col in df.columns:
-        if col != feature:
-            q1 = df[col].quantile(0.25)  # Calcola il primo quartile
-            q3 = df[col].quantile(0.75)  # Calcola il terzo quartile
-            iqr = q3 - q1  # Calcola l'interquartile range (IQR)
-
-            # Calcola i limiti per gli outlier
-            lower_bound = q1 - 1.5 * iqr
-            upper_bound = q3 + 1.5 * iqr
-
-            # Rimuovi gli outlier
-            df_clean = df_clean[(df_clean[col] >= lower_bound) & (df_clean[col] <= upper_bound)]
-
-    return df_clean
 
 def plot_boxplots(dataframe, feature):
  
@@ -191,6 +155,7 @@ def plot_bar_chart_df(df):
     plt.tight_layout()
     return fig
 
+
 def plot_result(res):
     metrics = ['accuracy', 'precision', 'recall', 'f1_score']
     classifiers = res.index.unique().tolist()
@@ -226,6 +191,7 @@ def plot_result(res):
 
     plt.tight_layout()
     return fig
+
 
 def classificator_evo(dataset, classifier, testsize, svm_c, svm_kernel, hidden_layer_sizes, activation_nn, criterion_tree, splitter_tree):
     metrics_dict = {}
@@ -287,71 +253,6 @@ def classificator_evo(dataset, classifier, testsize, svm_c, svm_kernel, hidden_l
     df['testsize'] = testsize
 
     return df
-
-#def classificator_evo (dataset, classifier, testsize):
-    accuracy_dict={}
-    x_data=dataset.drop(columns=[classifier])
-    y_data=dataset.loc[:,classifier]
-    x_train,x_test,y_train,y_test=train_test_split(x_data,y_data,test_size=testsize,random_state=10)
-    
-   ## RandomForestClassifier 
-    #rf_model = RandomForestClassifier(n_estimators=100, random_state=20)
-   # rf_model.fit(x_train, y_train)
-
-    #y_pred = rf_model.predict(x_test)
-
-    # Valutazione delle prestazioni del modello
-   # accuracy = accuracy_score(y_test, y_pred)
-    #print("Accuratezza del modello RandomForestClassifier: %.3f" %accuracy)
-  #  accuracy_dict['RandomForest']=round(accuracy,3)
-
-    mlp_classifier = MLPClassifier(max_iter=500, random_state=42)
-
-    mlp_classifier.fit(x_train, y_train)
-    y_pred = mlp_classifier.predict(x_test)
-    accuracy = accuracy_score(y_test, y_pred)
-    accuracy_dict['NN']=round(accuracy,3)
-
-    svm_classifier = SVC(kernel='rbf', C=4.0, gamma='scale', random_state=42)
-
-    svm_classifier.fit(x_train, y_train)
-    y_pred = svm_classifier.predict(x_test)
-
-    accuracy = accuracy_score(y_test, y_pred)
-    accuracy_dict['SVM']=round(accuracy,3)
-
-    # Crea il modello di regressione logistica con solo relevant
-    #logistic_regression = LogisticRegression(multi_class='multinomial', solver='lbfgs', max_iter=10000, random_state=42)
-
-    #logistic_regression.fit(x_train, y_train)
-    #y_pred = logistic_regression.predict(x_test)
-
-    #accuracy = accuracy_score(y_test, y_pred)
-    #print("Accuratezza del modello di regressione logistica: %.3f" %accuracy)
-    #accuracy_dict['Regression']=accuracy
-
-    # DecisionTreeClassifier con tutte le feature
-    tree_classifier = DecisionTreeClassifier(random_state=42)
-
-    tree_classifier.fit(x_train, y_train)
-    y_pred = tree_classifier.predict(x_test)
-
-    accuracy = accuracy_score(y_test, y_pred)
-    #print("Accuratezza del classificatore ad albero decisionale: %.3f" %accuracy)
-    accuracy_dict['Tree']=round(accuracy,3)
-
-
-    # Classificatore naive bayes con relevant feature
-    naive_bayes_classifier = GaussianNB()
-    naive_bayes_classifier.fit(x_train, y_train)
-
-    y_pred = naive_bayes_classifier.predict(x_test)
-
-    accuracy = accuracy_score(y_test, y_pred)
-    #print("Accuratezza del classificatore Naive Bayes: %.3f" %accuracy)
-    accuracy_dict['Bayes']=round(accuracy,3)
-
-    return accuracy_dict
 
 
 def restore_function_corr(corr_features, delta, dataframe, mean):
