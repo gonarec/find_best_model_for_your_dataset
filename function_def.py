@@ -151,6 +151,7 @@ def plot_bar_chart_df(df):
     ax.set_xticklabels(classifiers)
     max_value = df[metrics].values.max() * 1.2  
     ax.set_ylim(0, max_value)
+    ax.legend()
 
     plt.tight_layout()
     return fig
