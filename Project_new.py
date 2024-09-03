@@ -215,8 +215,9 @@ try:
 
                     if result.empty:
                         result = metrics_df
-                    else:
+                    else: 
                         result = pd.concat([result, metrics_df], axis=1)
+                        #print(result.index)  
 
                     loading_message.empty()
 
@@ -232,9 +233,9 @@ try:
 
                     if opt == "Yes, show me the results":
                         st.markdown("<p style='color: yellow;'>THESE ARE YOUR TESTS:</p>", unsafe_allow_html=True)
-                        performance_columns = result.columns.get_level_values(1)
-                        performance_columns = performance_columns[~performance_columns.str.startswith('Test Size')]
-
+                        performance_columns = result.columns.get_level_values(1)                        
+                        performance_columns = performance_columns[~performance_columns.str.startswith('testsize')]
+                        
                         result_to_display = result.loc[:, (slice(None), performance_columns)]
 
                         st.dataframe(result_to_display)

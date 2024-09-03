@@ -188,14 +188,15 @@ def plot_result(res):
         ax.set_xticklabels(classifiers)
         ax.legend()
 
-        max_value = df[metrics].values.max() * 1.2  
+        max_value = df[metrics].values.max() * 1.2 
+        ax.set_ylim(0, max_value) 
 
     plt.tight_layout()
     return fig
 
 
 def classificator_evo(dataset, classifier, testsize, svm_c, svm_kernel, hidden_layer_sizes, activation_nn, criterion_tree, splitter_tree):
-    metrics_dict = {}
+    metrics_dict = {}  #metrics_list = []
 
     x_data = dataset.drop(columns=[classifier])
     y_data = dataset[classifier]
@@ -206,6 +207,7 @@ def classificator_evo(dataset, classifier, testsize, svm_c, svm_kernel, hidden_l
     mlp_classifier.fit(x_train, y_train)
     y_pred = mlp_classifier.predict(x_test)
 
+    #metrics_list.append({'Classifier': 'NN','Accuracy': round(accuracy_score(y_test, y_pred), 3)   ecc })
     metrics_dict['NN'] = {
         'accuracy': round(accuracy_score(y_test, y_pred), 3),
         'precision': round(precision_score(y_test, y_pred, average='weighted',zero_division=0), 3),
@@ -250,6 +252,7 @@ def classificator_evo(dataset, classifier, testsize, svm_c, svm_kernel, hidden_l
     }
 
     # Convert metrics_dict to DataFrame and add testsize
+    #metrics_df = pd.DataFrame(metrics_list)
     df = pd.DataFrame.from_dict(metrics_dict, orient='index')
     df['testsize'] = testsize
 
